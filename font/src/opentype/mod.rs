@@ -60,19 +60,19 @@ impl OpenTypeFile {
     }
 
     fn parse_num_tables(content: &[u8]) -> u16 {
-        (content[NUM_TABLES_OFFSET] as u16) << 8 | content[NUM_TABLES_OFFSET+1] as u16
+        BigEndian::read_u16(&content[NUM_TABLES_OFFSET..NUM_TABLES_OFFSET+2])
     }
 
     fn parse_search_range(content: &[u8]) -> u16 {
-        (content[SEARCH_RANGE_OFFSET] as u16) << 8 | content[SEARCH_RANGE_OFFSET+1] as u16
+        BigEndian::read_u16(&content[SEARCH_RANGE_OFFSET..SEARCH_RANGE_OFFSET+2])
     }
 
     fn parse_entry_selector(content: &[u8]) -> u16 {
-        (content[ENTRY_SELECTION_OFFSET] as u16) << 8 | content[ENTRY_SELECTION_OFFSET+1] as u16
+        BigEndian::read_u16(&content[ENTRY_SELECTION_OFFSET..ENTRY_SELECTION_OFFSET+2])
     }
 
     fn parse_range_shift(content: &[u8]) -> u16 {
-        (content[RANGE_SHIFT_OFFSET] as u16) << 8 | content[RANGE_SHIFT_OFFSET+1] as u16
+        BigEndian::read_u16(&content[RANGE_SHIFT_OFFSET..RANGE_SHIFT_OFFSET+2])
     }
 
     fn parse_table_records(content: &[u8]) -> Vec<TableRecord> {
