@@ -1,0 +1,11 @@
+[[package]]
+name = "font"
+version = "0.1.0"
+
+[[package]]
+name = "fonts"
+version = "0.1.0"
+dependencies = [
+ "font 0.1.0",
+]
+
