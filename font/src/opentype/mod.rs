@@ -1,3 +1,7 @@
+use byteorder::{ByteOrder, BigEndian};
+
+mod cmap;
+
 const HEADER: [u8; 4] = [0x00u8, 0x01, 0x00, 0x00]; // 0x00010000
 const HEADER_OFFSET: usize = 0;
 const HEADER_LENGTH: usize = 4;
@@ -10,6 +14,8 @@ const TABLE_RECORD_LENGTH: usize = 16;
 const TABLE_TAG_OFFSET: usize = 0;
 const TABLE_TAG_LENGTH: usize = 4;
 const TABLE_CHECKSUM_OFFSET: usize = 4;
+const TABLE_OFFSET_OFFSET: usize = 8;
+const TABLE_LENGTH_OFFSET: usize = 12;
 
 #[derive(Debug)]
 pub struct OpenTypeFile {
@@ -18,6 +24,7 @@ pub struct OpenTypeFile {
     entry_selector: u16,
     range_shift: u16,
     table_records: Vec<TableRecord>,
+    cmap: Option<cmap::CmapTable>,
 }
 
 impl OpenTypeFile {
@@ -26,12 +33,25 @@ impl OpenTypeFile {
             panic!("Incorrect file type.");
         }
 
+        let table_records = Self::parse_table_records(content);
+        let mut cmap_data: Option<&[u8]> = None;
+        for record in &table_records {
+            match record.table_type() {
+                TableType::Cmap => cmap_data = Some(record.table_data(content)),
+                TableType::Unknown => {},
+            }
+        }
+
         Self {
             num_tables: Self::parse_num_tables(content),
             search_range: Self::parse_search_range(content),
             entry_selector: Self::parse_entry_selector(content),
             range_shift: Self::parse_range_shift(content),
-            table_records: Self::parse_table_records(content),
+            table_records: table_records,
+            cmap: match cmap_data {
+                Some(data) => Some(cmap::CmapTable::deserialize(data)),
+                None => None,
+            },
         }
     }
 
@@ -72,10 +92,17 @@ impl OpenTypeFile {
     }
 }
 
+enum TableType {
+    Cmap,
+    Unknown,
+}
+
 #[derive(Debug)]
 struct TableRecord {
     tag: [u8; 4],
     checksum: u32,
+    offset: usize,
+    length: usize,
 }
 
 impl TableRecord {
@@ -83,7 +110,20 @@ impl TableRecord {
         Self {
             tag: Self::parse_tag(content),
             checksum: Self::parse_checksum(content),
+            offset: Self::parse_offset(content),
+            length: Self::parse_length(content),
         }
+    }
+
+    fn table_type(&self) -> TableType {
+        match self.tag {
+            [0x63 , 0x6d , 0x61 , 0x70] => TableType::Cmap,
+            _ => TableType::Unknown,
+        }
+    }
+
+    fn table_data<'a>(&self, content: &'a [u8]) -> &'a [u8] {
+        &content[self.offset..self.offset+self.length]
     }
 
     fn parse_tag(content: &[u8]) -> [u8; 4] {
@@ -92,20 +132,16 @@ impl TableRecord {
     }
 
     fn parse_checksum(content: &[u8]) -> u32 {
-        bytes_to_u32(&content[TABLE_CHECKSUM_OFFSET..TABLE_CHECKSUM_OFFSET+4])
-    }
-}
-
-fn bytes_to_u32(bytes: &[u8]) -> u32 {
-    if bytes.len() != 4 {
-        panic!("Invalid vector: {:?}", bytes);
+        BigEndian::read_u32(&content[TABLE_CHECKSUM_OFFSET..TABLE_CHECKSUM_OFFSET+4])
     }
 
-    let mut out: u32 = (bytes[0] as u32) << 24;
-    out |= (bytes[1] as u32) << 16;
-    out |= (bytes[2] as u32) << 8;
-    out |= bytes[3] as u32;
-    out
+    fn parse_offset(content: &[u8]) -> usize {
+        BigEndian::read_u32(&content[TABLE_OFFSET_OFFSET..TABLE_OFFSET_OFFSET+4]) as usize
+    }
+
+    fn parse_length(content: &[u8]) -> usize {
+        BigEndian::read_u32(&content[TABLE_LENGTH_OFFSET..TABLE_LENGTH_OFFSET+4]) as usize
+    }
 }
 
 #[cfg(test)]
@@ -180,10 +216,27 @@ mod tests {
         let mut content = vec![0x00u8; 16];
         content[0..4].clone_from_slice(&[0x01u8, 0x02, 0x03, 0x04]);
         content[4..8].clone_from_slice(&[0xFCu8, 0xFD, 0xFE, 0xFF]);
+        content[8..12].clone_from_slice(&[0x00u8, 0x00, 0xFF, 0xDD]);
+        content[12..16].clone_from_slice(&[0x00u8, 0x00, 0x08, 0x00]);
 
         let rec0 = TableRecord::deserialize(&content);
         assert_eq!(rec0.tag, [0x01u8, 0x02, 0x03, 0x04]);
         assert_eq!(rec0.checksum, 0xFCFDFEFF);
+        assert_eq!(rec0.offset, 0x0000FFDD);
+        assert_eq!(rec0.length, 0x00000800);
+    }
 
+    #[test]
+    fn table_record_data() {
+        let mut content = vec![0x00u8; 16];
+        content[0..4].clone_from_slice(&[0x01u8, 0x02, 0x03, 0x04]);
+        content[4..8].clone_from_slice(&[0xFCu8, 0xFD, 0xFE, 0xFF]);
+        content[8..12].clone_from_slice(&[0x00u8, 0x00, 0x00, 0x02]);
+        content[12..16].clone_from_slice(&[0x00u8, 0x00, 0x00, 0x04]);
+
+        let rec0 = TableRecord::deserialize(&content);
+
+        let table_data = rec0.table_data(&content);
+        assert_eq!(table_data, &[0x03u8, 0x04, 0xFC, 0xFD]);
     }
 }

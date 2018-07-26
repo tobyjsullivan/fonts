@@ -1,3 +1,5 @@
+extern crate byteorder;
+
 mod opentype;
 
 #[derive(Debug)]
@@ -44,13 +46,5 @@ impl Font {
             [0x77, 0x4F, 0x46, 0x32] => FileType::Woff2, // 'wOF2'
             _ => panic!("Unrecognised type"),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
     }
 }

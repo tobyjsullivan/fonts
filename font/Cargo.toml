@@ -4,3 +4,4 @@ version = "0.1.0"
 authors = ["Toby Sullivan <toby.s@canva.com>"]
 
 [dependencies]
+byteorder = "1"
