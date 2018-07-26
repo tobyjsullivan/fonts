@@ -181,8 +181,8 @@ mod tests {
     fn parse_table_records() {
         let mut content = vec![0x00u8; 47252];
         content[5] = 0x12;
-        content[12..12+4].clone_from_slice(&[0x6eu8, 0x61, 0x6d, 0x65]);
-        content[12+32..12+32+4].clone_from_slice(&[0x67u8, 0x6c, 0x79, 0x66]);
+        content[12..12+4].clone_from_slice(&[0x6Eu8, 0x61, 0x6D, 0x65]);
+        content[12+32..12+32+4].clone_from_slice(&[0x67u8, 0x6C, 0x79, 0x66]);
 
         let table_records = OpenTypeFile::parse_table_records(&content);
 
@@ -194,7 +194,7 @@ mod tests {
     #[test]
     fn parse_nth_table_record_first() {
         let mut content = vec![0x00u8; 47252];
-        content[12..12+4].clone_from_slice(&[0x6eu8, 0x61, 0x6d, 0x65]);
+        content[12..12+4].clone_from_slice(&[0x6Eu8, 0x61, 0x6D, 0x65]);
         content[16..16+4].clone_from_slice(&[0xFCu8, 0xFD, 0xFE, 0xFF]);
 
         let rec0 = OpenTypeFile::parse_nth_table_record(&content, 0);
@@ -205,7 +205,7 @@ mod tests {
     #[test]
     fn parse_nth_table_record_offset() {
         let mut content = vec![0x00u8; 47252];
-        content[12+32..12+32+4].clone_from_slice(&[0x6eu8, 0x61, 0x6d, 0x65]);
+        content[12+32..12+32+4].clone_from_slice(&[0x6Eu8, 0x61, 0x6D, 0x65]);
 
         let rec2 = OpenTypeFile::parse_nth_table_record(&content, 2);
         assert_eq!(rec2.tag, ['n', 'a', 'm', 'e']);
@@ -214,7 +214,7 @@ mod tests {
     #[test]
     fn deserialize_table_record() {
         let mut content = vec![0x00u8; 16];
-        content[0..4].clone_from_slice(&[0x6eu8, 0x61, 0x6d, 0x65]);
+        content[0..4].clone_from_slice(&[0x6Eu8, 0x61, 0x6D, 0x65]);
         content[4..8].clone_from_slice(&[0xFCu8, 0xFD, 0xFE, 0xFF]);
         content[8..12].clone_from_slice(&[0x00u8, 0x00, 0xFF, 0xDD]);
         content[12..16].clone_from_slice(&[0x00u8, 0x00, 0x08, 0x00]);
@@ -229,7 +229,7 @@ mod tests {
     #[test]
     fn table_record_data() {
         let mut content = vec![0x00u8; 16];
-        content[0..4].clone_from_slice(&[0x6eu8, 0x61, 0x6d, 0x65]);
+        content[0..4].clone_from_slice(&[0x6Eu8, 0x61, 0x6D, 0x65]);
         content[4..8].clone_from_slice(&[0xFCu8, 0xFD, 0xFE, 0xFF]);
         content[8..12].clone_from_slice(&[0x00u8, 0x00, 0x00, 0x02]);
         content[12..16].clone_from_slice(&[0x00u8, 0x00, 0x00, 0x04]);
@@ -237,6 +237,6 @@ mod tests {
         let rec0 = TableRecord::deserialize(&content);
 
         let table_data = rec0.table_data(&content);
-        assert_eq!(table_data, &[0x6du8, 0x65, 0xFC, 0xFD]);
+        assert_eq!(table_data, &[0x6Du8, 0x65, 0xFC, 0xFD]);
     }
 }
