@@ -22,7 +22,7 @@ impl Font {
 
         match file_type {
             FileType::OpenTypeWithTrueTypeOutlines => {
-                let parsed = opentype::OpenTypeFile::from(content);
+                let parsed = opentype::OpenTypeFile::deserialize(content);
                 println!("OpenTypeFile: {:?}", parsed);
             },
             _ => {},

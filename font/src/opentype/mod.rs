@@ -21,7 +21,7 @@ pub struct OpenTypeFile {
 }
 
 impl OpenTypeFile {
-    pub fn from(content: &Vec<u8>) -> Self {
+    pub fn deserialize(content: &[u8]) -> Self {
         if !Self::detect(content) {
             panic!("Incorrect file type.");
         }
@@ -35,33 +35,40 @@ impl OpenTypeFile {
         }
     }
 
-    fn detect(content: &Vec<u8>) -> bool {
+    fn detect(content: &[u8]) -> bool {
         &content[HEADER_OFFSET..HEADER_LENGTH] == &HEADER
     }
 
-    fn parse_num_tables(content: &Vec<u8>) -> u16 {
+    fn parse_num_tables(content: &[u8]) -> u16 {
         (content[NUM_TABLES_OFFSET] as u16) << 8 | content[NUM_TABLES_OFFSET+1] as u16
     }
 
-    fn parse_search_range(content: &Vec<u8>) -> u16 {
+    fn parse_search_range(content: &[u8]) -> u16 {
         (content[SEARCH_RANGE_OFFSET] as u16) << 8 | content[SEARCH_RANGE_OFFSET+1] as u16
     }
 
-    fn parse_entry_selector(content: &Vec<u8>) -> u16 {
+    fn parse_entry_selector(content: &[u8]) -> u16 {
         (content[ENTRY_SELECTION_OFFSET] as u16) << 8 | content[ENTRY_SELECTION_OFFSET+1] as u16
     }
 
-    fn parse_range_shift(content: &Vec<u8>) -> u16 {
+    fn parse_range_shift(content: &[u8]) -> u16 {
         (content[RANGE_SHIFT_OFFSET] as u16) << 8 | content[RANGE_SHIFT_OFFSET+1] as u16
     }
 
-    fn parse_table_records(content: &Vec<u8>) -> Vec<TableRecord> {
+    fn parse_table_records(content: &[u8]) -> Vec<TableRecord> {
         let mut records: Vec<TableRecord> = vec![];
         let num_tables: usize = Self::parse_num_tables(content) as usize;
         for n in 0..num_tables {
-            records.push(TableRecord::parse_nth(content, n));
+            records.push(Self::parse_nth_table_record(content, n));
         }
         records
+    }
+
+    fn parse_nth_table_record(content: &[u8], n: usize) -> TableRecord {
+        let offset = TABLE_RECORDS_OFFSET + n * TABLE_RECORD_LENGTH;
+        let record_content: &[u8] = &content[offset..offset+TABLE_RECORD_LENGTH];
+
+        TableRecord::deserialize(record_content)
     }
 }
 
@@ -72,24 +79,20 @@ struct TableRecord {
 }
 
 impl TableRecord {
-    fn parse_nth(content: &Vec<u8>, n: usize) -> Self {
-        let offset = TABLE_RECORDS_OFFSET + n * TABLE_RECORD_LENGTH;
-
+    fn deserialize(content: &[u8]) -> Self {
         Self {
-            tag: Self::parse_tag(content, offset),
-            checksum: Self::parse_checksum(content, offset),
+            tag: Self::parse_tag(content),
+            checksum: Self::parse_checksum(content),
         }
     }
 
-    fn parse_tag(content: &Vec<u8>, offset: usize) -> [u8; 4] {
-        let start = offset + TABLE_TAG_OFFSET;
-        let tag = &content[start..start+TABLE_TAG_LENGTH];
+    fn parse_tag(content: &[u8]) -> [u8; 4] {
+        let tag = &content[TABLE_TAG_OFFSET..TABLE_TAG_OFFSET+TABLE_TAG_LENGTH];
         [tag[0], tag[1], tag[2], tag[3]]
     }
 
-    fn parse_checksum(content: &Vec<u8>, offset: usize) -> u32 {
-        let start = offset + TABLE_CHECKSUM_OFFSET;
-        bytes_to_u32(&content[start..start+4])
+    fn parse_checksum(content: &[u8]) -> u32 {
+        bytes_to_u32(&content[TABLE_CHECKSUM_OFFSET..TABLE_CHECKSUM_OFFSET+4])
     }
 }
 
@@ -139,26 +142,6 @@ mod tests {
     }
 
     #[test]
-    fn parse_nth_table_record_first() {
-        let mut content = vec![0x00u8; 47252];
-        content[12..12+4].clone_from_slice(&[0x01u8, 0x02, 0x03, 0x04]);
-        content[16..16+4].clone_from_slice(&[0xFCu8, 0xFD, 0xFE, 0xFF]);
-
-        let rec0 = TableRecord::parse_nth(&content, 0);
-        assert_eq!(rec0.tag, [0x01u8, 0x02, 0x03, 0x04]);
-        assert_eq!(rec0.checksum, 0xFCFDFEFF);
-    }
-
-    #[test]
-    fn parse_nth_table_record_offset() {
-        let mut content = vec![0x00u8; 47252];
-        content[12+32..12+32+4].clone_from_slice(&[0x02u8, 0x04, 0x08, 0x10]);
-
-        let rec2 = TableRecord::parse_nth(&content, 2);
-        assert_eq!(rec2.tag, [0x02u8, 0x04, 0x08, 0x10]);
-    }
-
-    #[test]
     fn parse_table_records() {
         let mut content = vec![0x00u8; 47252];
         content[5] = 0x12;
@@ -170,5 +153,37 @@ mod tests {
         assert_eq!(table_records.len(), 18);
         assert_eq!(table_records[0].tag, [0x01u8, 0x02, 0x03, 0x04]);
         assert_eq!(table_records[2].tag, [0x02u8, 0x04, 0x08, 0x10]);
+    }
+
+    #[test]
+    fn parse_nth_table_record_first() {
+        let mut content = vec![0x00u8; 47252];
+        content[12..12+4].clone_from_slice(&[0x01u8, 0x02, 0x03, 0x04]);
+        content[16..16+4].clone_from_slice(&[0xFCu8, 0xFD, 0xFE, 0xFF]);
+
+        let rec0 = OpenTypeFile::parse_nth_table_record(&content, 0);
+        assert_eq!(rec0.tag, [0x01u8, 0x02, 0x03, 0x04]);
+        assert_eq!(rec0.checksum, 0xFCFDFEFF);
+    }
+
+    #[test]
+    fn parse_nth_table_record_offset() {
+        let mut content = vec![0x00u8; 47252];
+        content[12+32..12+32+4].clone_from_slice(&[0x02u8, 0x04, 0x08, 0x10]);
+
+        let rec2 = OpenTypeFile::parse_nth_table_record(&content, 2);
+        assert_eq!(rec2.tag, [0x02u8, 0x04, 0x08, 0x10]);
+    }
+
+    #[test]
+    fn deserialize_table_record() {
+        let mut content = vec![0x00u8; 16];
+        content[0..4].clone_from_slice(&[0x01u8, 0x02, 0x03, 0x04]);
+        content[4..8].clone_from_slice(&[0xFCu8, 0xFD, 0xFE, 0xFF]);
+
+        let rec0 = TableRecord::deserialize(&content);
+        assert_eq!(rec0.tag, [0x01u8, 0x02, 0x03, 0x04]);
+        assert_eq!(rec0.checksum, 0xFCFDFEFF);
+
     }
 }
