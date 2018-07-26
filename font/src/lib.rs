@@ -1,3 +1,5 @@
+mod opentype;
+
 #[derive(Debug)]
 pub enum FileType {
     OpenTypeWithTrueTypeOutlines, // https://docs.microsoft.com/en-us/typography/opentype/spec/otff
@@ -16,8 +18,18 @@ pub struct Font {
 
 impl Font {
     pub fn from(content: &Vec<u8>) -> Self {
+        let file_type = Font::detect_type(content);
+
+        match file_type {
+            FileType::OpenTypeWithTrueTypeOutlines => {
+                let parsed = opentype::OpenTypeFile::from(content);
+                println!("OpenTypeFile: {:?}", parsed);
+            },
+            _ => {},
+        }
+
         Font {
-            file_type: Font::detect_type(content),
+            file_type,
         }
     }
 
