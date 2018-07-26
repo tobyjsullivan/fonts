@@ -99,7 +99,7 @@ enum TableType {
 
 #[derive(Debug)]
 struct TableRecord {
-    tag: [u8; 4],
+    tag: [char; 4],
     checksum: u32,
     offset: usize,
     length: usize,
@@ -117,7 +117,7 @@ impl TableRecord {
 
     fn table_type(&self) -> TableType {
         match self.tag {
-            [0x63 , 0x6d , 0x61 , 0x70] => TableType::Cmap,
+            ['c' , 'm' , 'a' , 'p'] => TableType::Cmap,
             _ => TableType::Unknown,
         }
     }
@@ -126,9 +126,9 @@ impl TableRecord {
         &content[self.offset..self.offset+self.length]
     }
 
-    fn parse_tag(content: &[u8]) -> [u8; 4] {
+    fn parse_tag(content: &[u8]) -> [char; 4] {
         let tag = &content[TABLE_TAG_OFFSET..TABLE_TAG_OFFSET+TABLE_TAG_LENGTH];
-        [tag[0], tag[1], tag[2], tag[3]]
+        [tag[0] as char, tag[1] as char, tag[2] as char, tag[3] as char]
     }
 
     fn parse_checksum(content: &[u8]) -> u32 {
@@ -181,46 +181,46 @@ mod tests {
     fn parse_table_records() {
         let mut content = vec![0x00u8; 47252];
         content[5] = 0x12;
-        content[12..12+4].clone_from_slice(&[0x01u8, 0x02, 0x03, 0x04]);
-        content[12+32..12+32+4].clone_from_slice(&[0x02u8, 0x04, 0x08, 0x10]);
+        content[12..12+4].clone_from_slice(&[0x6eu8, 0x61, 0x6d, 0x65]);
+        content[12+32..12+32+4].clone_from_slice(&[0x67u8, 0x6c, 0x79, 0x66]);
 
         let table_records = OpenTypeFile::parse_table_records(&content);
 
         assert_eq!(table_records.len(), 18);
-        assert_eq!(table_records[0].tag, [0x01u8, 0x02, 0x03, 0x04]);
-        assert_eq!(table_records[2].tag, [0x02u8, 0x04, 0x08, 0x10]);
+        assert_eq!(table_records[0].tag, ['n', 'a', 'm', 'e']);
+        assert_eq!(table_records[2].tag, ['g', 'l', 'y', 'f']);
     }
 
     #[test]
     fn parse_nth_table_record_first() {
         let mut content = vec![0x00u8; 47252];
-        content[12..12+4].clone_from_slice(&[0x01u8, 0x02, 0x03, 0x04]);
+        content[12..12+4].clone_from_slice(&[0x6eu8, 0x61, 0x6d, 0x65]);
         content[16..16+4].clone_from_slice(&[0xFCu8, 0xFD, 0xFE, 0xFF]);
 
         let rec0 = OpenTypeFile::parse_nth_table_record(&content, 0);
-        assert_eq!(rec0.tag, [0x01u8, 0x02, 0x03, 0x04]);
+        assert_eq!(rec0.tag, ['n', 'a', 'm', 'e']);
         assert_eq!(rec0.checksum, 0xFCFDFEFF);
     }
 
     #[test]
     fn parse_nth_table_record_offset() {
         let mut content = vec![0x00u8; 47252];
-        content[12+32..12+32+4].clone_from_slice(&[0x02u8, 0x04, 0x08, 0x10]);
+        content[12+32..12+32+4].clone_from_slice(&[0x6eu8, 0x61, 0x6d, 0x65]);
 
         let rec2 = OpenTypeFile::parse_nth_table_record(&content, 2);
-        assert_eq!(rec2.tag, [0x02u8, 0x04, 0x08, 0x10]);
+        assert_eq!(rec2.tag, ['n', 'a', 'm', 'e']);
     }
 
     #[test]
     fn deserialize_table_record() {
         let mut content = vec![0x00u8; 16];
-        content[0..4].clone_from_slice(&[0x01u8, 0x02, 0x03, 0x04]);
+        content[0..4].clone_from_slice(&[0x6eu8, 0x61, 0x6d, 0x65]);
         content[4..8].clone_from_slice(&[0xFCu8, 0xFD, 0xFE, 0xFF]);
         content[8..12].clone_from_slice(&[0x00u8, 0x00, 0xFF, 0xDD]);
         content[12..16].clone_from_slice(&[0x00u8, 0x00, 0x08, 0x00]);
 
         let rec0 = TableRecord::deserialize(&content);
-        assert_eq!(rec0.tag, [0x01u8, 0x02, 0x03, 0x04]);
+        assert_eq!(rec0.tag, ['n', 'a', 'm', 'e']);
         assert_eq!(rec0.checksum, 0xFCFDFEFF);
         assert_eq!(rec0.offset, 0x0000FFDD);
         assert_eq!(rec0.length, 0x00000800);
@@ -229,7 +229,7 @@ mod tests {
     #[test]
     fn table_record_data() {
         let mut content = vec![0x00u8; 16];
-        content[0..4].clone_from_slice(&[0x01u8, 0x02, 0x03, 0x04]);
+        content[0..4].clone_from_slice(&[0x6eu8, 0x61, 0x6d, 0x65]);
         content[4..8].clone_from_slice(&[0xFCu8, 0xFD, 0xFE, 0xFF]);
         content[8..12].clone_from_slice(&[0x00u8, 0x00, 0x00, 0x02]);
         content[12..16].clone_from_slice(&[0x00u8, 0x00, 0x00, 0x04]);
@@ -237,6 +237,6 @@ mod tests {
         let rec0 = TableRecord::deserialize(&content);
 
         let table_data = rec0.table_data(&content);
-        assert_eq!(table_data, &[0x03u8, 0x04, 0xFC, 0xFD]);
+        assert_eq!(table_data, &[0x6du8, 0x65, 0xFC, 0xFD]);
     }
 }
