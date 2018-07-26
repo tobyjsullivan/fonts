@@ -20,12 +20,12 @@ pub struct OpenTypeFile {
     table_records: Vec<TableRecord>,
 }
 
-impl OpenTypeFile {    
+impl OpenTypeFile {
     pub fn from(content: &Vec<u8>) -> Self {
         if !Self::detect(content) {
             panic!("Incorrect file type.");
         }
-        
+
         Self {
             num_tables: Self::parse_num_tables(content),
             search_range: Self::parse_search_range(content),
