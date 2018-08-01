@@ -55,7 +55,7 @@ impl OpenTypeFile {
         }
     }
 
-    fn detect(content: &[u8]) -> bool {
+    pub fn detect(content: &[u8]) -> bool {
         &content[HEADER_OFFSET..HEADER_LENGTH] == &HEADER
     }
 

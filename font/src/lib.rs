@@ -1,6 +1,12 @@
 extern crate byteorder;
 
 mod opentype;
+mod opentype_cff;
+mod opentype_collection;
+mod postscript;
+mod truetype_apple;
+mod woff;
+mod woff2;
 
 #[derive(Debug)]
 pub enum FileType {
@@ -36,15 +42,22 @@ impl Font {
     }
 
     fn detect_type(content: &Vec<u8>) -> FileType {
-        match content[0..4] {
-            [0x00, 0x01, 0x00, 0x00] => FileType::OpenTypeWithTrueTypeOutlines, // 0x00010000
-            [0x4F, 0x54, 0x54, 0x4F] => FileType::OpenTypeWithCFFData, // 'OTTO'
-            [0x74, 0x74, 0x63, 0x66] => FileType::OpenTypeFontCollection, // 'ttcf'
-            [0x74, 0x79, 0x70, 0x31] => FileType::PostScriptInSfnt, // 'typ1'
-            [0x74, 0x72, 0x75, 0x65] => FileType::AppleCompatibleTrueType, // 'true'
-            [0x77, 0x4F, 0x46, 0x46] => FileType::Woff, // 'wOFF'
-            [0x77, 0x4F, 0x46, 0x32] => FileType::Woff2, // 'wOF2'
-            _ => panic!("Unrecognised type"),
+        if opentype::OpenTypeFile::detect(content) {
+            FileType::OpenTypeWithTrueTypeOutlines
+        } else if opentype_cff::OpenTypeCffFile::detect(content) {
+            FileType::OpenTypeWithCFFData
+        } else if opentype_collection::OpenTypeCollectionFile::detect(content) {
+            FileType::OpenTypeFontCollection
+        } else if postscript::PostScriptFile::detect(content) {
+            FileType::PostScriptInSfnt
+        } else if truetype_apple::TrueTypeFile::detect(content) {
+            FileType::AppleCompatibleTrueType
+        } else if woff::WoffFile::detect(content) {
+            FileType::Woff
+        } else if woff2::Woff2File::detect(content) {
+            FileType::Woff2
+        } else {
+            panic!("Unrecognised type")
         }
     }
 }
