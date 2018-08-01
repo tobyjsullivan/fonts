@@ -6,6 +6,6 @@ pub struct Woff2File {}
 
 impl Woff2File {
     pub fn detect(content: &Vec<u8>) -> bool {
-        &content[HEADER_OFFSET..HEADER_LENGTH] == &HEADER
+        &content[HEADER_OFFSET..HEADER_OFFSET+HEADER_LENGTH] == &HEADER
     }
 }

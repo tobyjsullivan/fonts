@@ -7,6 +7,7 @@ mod postscript;
 mod truetype_apple;
 mod woff;
 mod woff2;
+mod embedded_opentype;
 
 #[derive(Debug)]
 pub enum FileType {
@@ -17,6 +18,7 @@ pub enum FileType {
     AppleCompatibleTrueType, // https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6.html
     Woff, // https://www.w3.org/TR/2012/REC-WOFF-20121213/
     Woff2, // https://www.w3.org/TR/WOFF2/
+    EmbeddedOpenType, // https://www.w3.org/Submission/EOT/#FileFormat
 }
 
 #[derive(Debug)]
@@ -56,6 +58,8 @@ impl Font {
             FileType::Woff
         } else if woff2::Woff2File::detect(content) {
             FileType::Woff2
+        } else if embedded_opentype::EmbeddedOpenTypeFile::detect(content) {
+            FileType::EmbeddedOpenType
         } else {
             panic!("Unrecognised type")
         }

@@ -56,7 +56,7 @@ impl OpenTypeFile {
     }
 
     pub fn detect(content: &[u8]) -> bool {
-        &content[HEADER_OFFSET..HEADER_LENGTH] == &HEADER
+        &content[HEADER_OFFSET..HEADER_OFFSET+HEADER_LENGTH] == &HEADER
     }
 
     fn parse_num_tables(content: &[u8]) -> u16 {
