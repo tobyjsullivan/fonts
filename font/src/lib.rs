@@ -9,7 +9,7 @@ mod woff;
 mod woff2;
 mod embedded_opentype;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum FileType {
     OpenTypeWithTrueTypeOutlines, // https://docs.microsoft.com/en-us/typography/opentype/spec/otff
     OpenTypeWithCFFData, // https://docs.microsoft.com/en-us/typography/opentype/spec/otff
@@ -26,42 +26,58 @@ pub struct Font {
     pub file_type: FileType,
 }
 
+pub enum FontParseErr {
+    UnrecognizedFormatError
+}
+
 impl Font {
-    pub fn from(content: &Vec<u8>) -> Self {
-        let file_type = Font::detect_type(content);
+    pub fn from(content: &Vec<u8>) -> Result<Self, FontParseErr> {
+        match Font::detect_type(content) {
+            Some(file_type) => {
+                if (file_type == FileType::OpenTypeWithTrueTypeOutlines) {
+                    let parsed = opentype::OpenTypeFile::deserialize(content);
+                    println!("OpenTypeFile: {:?}", parsed);
+                }
 
-        match file_type {
-            FileType::OpenTypeWithTrueTypeOutlines => {
-                let parsed = opentype::OpenTypeFile::deserialize(content);
-                println!("OpenTypeFile: {:?}", parsed);
+                Ok(Font {
+                    file_type,
+                })
             },
-            _ => {},
-        }
-
-        Font {
-            file_type,
+            None => Err(FontParseErr::UnrecognizedFormatError),
         }
     }
 
-    fn detect_type(content: &Vec<u8>) -> FileType {
+    fn detect_type(content: &Vec<u8>) -> Option<FileType> {
         if opentype::OpenTypeFile::detect(content) {
-            FileType::OpenTypeWithTrueTypeOutlines
+            Some(FileType::OpenTypeWithTrueTypeOutlines)
         } else if opentype_cff::OpenTypeCffFile::detect(content) {
-            FileType::OpenTypeWithCFFData
+            Some(FileType::OpenTypeWithCFFData)
         } else if opentype_collection::OpenTypeCollectionFile::detect(content) {
-            FileType::OpenTypeFontCollection
+            Some(FileType::OpenTypeFontCollection)
         } else if postscript::PostScriptFile::detect(content) {
-            FileType::PostScriptInSfnt
+            Some(FileType::PostScriptInSfnt)
         } else if truetype_apple::TrueTypeFile::detect(content) {
-            FileType::AppleCompatibleTrueType
+            Some(FileType::AppleCompatibleTrueType)
         } else if woff::WoffFile::detect(content) {
-            FileType::Woff
+            Some(FileType::Woff)
         } else if woff2::Woff2File::detect(content) {
-            FileType::Woff2
+            Some(FileType::Woff2)
         } else if embedded_opentype::EmbeddedOpenTypeFile::detect(content) {
-            FileType::EmbeddedOpenType
+            Some(FileType::EmbeddedOpenType)
         } else {
-            panic!("Unrecognised type")
+            None
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn detect_type() {
+        let mut content = vec![0x00u8; 47252];
+        content[..4].clone_from_slice(&[0x00u8, 0x01, 0x00, 0x00]);
+        assert_eq!(Font::detect_type(&content), Some(FileType::OpenTypeWithTrueTypeOutlines));
     }
 }
