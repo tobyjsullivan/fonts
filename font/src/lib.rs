@@ -26,6 +26,7 @@ pub struct Font {
     pub file_type: FileType,
 }
 
+#[derive(Debug)]
 pub enum FontParseErr {
     UnrecognizedFormatError
 }
@@ -34,7 +35,7 @@ impl Font {
     pub fn from(content: &Vec<u8>) -> Result<Self, FontParseErr> {
         match Font::detect_type(content) {
             Some(file_type) => {
-                if (file_type == FileType::OpenTypeWithTrueTypeOutlines) {
+                if file_type == FileType::OpenTypeWithTrueTypeOutlines {
                     let parsed = opentype::OpenTypeFile::deserialize(content);
                     println!("OpenTypeFile: {:?}", parsed);
                 }

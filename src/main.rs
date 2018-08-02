@@ -20,6 +20,12 @@ fn main() {
 
     println!("File read in. {} bytes.", data.len());
 
-    let parsed = Font::from(&data);
-    println!("Parsed: {:?}", parsed);
+    match Font::from(&data) {
+        Ok(parsed) => {
+            println!("Parsed: {:?}", parsed);
+        },
+        Err(error) => {
+            println!("Failed to parse: {:?}", error);
+        }
+    }
 }
