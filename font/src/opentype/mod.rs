@@ -1,6 +1,8 @@
 use byteorder::{ByteOrder, BigEndian};
+use std::fmt::Debug;
 
 mod cmap;
+mod name;
 
 const HEADER: [u8; 4] = [0x00u8, 0x01, 0x00, 0x00]; // 0x00010000
 const HEADER_OFFSET: usize = 0;
@@ -25,6 +27,7 @@ pub struct OpenTypeFile {
     range_shift: u16,
     table_records: Vec<TableRecord>,
     cmap: Option<cmap::CmapTable>,
+    name: Option<name::NameTable>,
 }
 
 impl OpenTypeFile {
@@ -35,9 +38,11 @@ impl OpenTypeFile {
 
         let table_records = Self::parse_table_records(content);
         let mut cmap_data: Option<&[u8]> = None;
+        let mut name_data: Option<&[u8]> = None;
         for record in &table_records {
             match record.table_type() {
                 TableType::Cmap => cmap_data = Some(record.table_data(content)),
+                TableType::Name => name_data = Some(record.table_data(content)),
                 TableType::Unknown => {},
             }
         }
@@ -48,10 +53,18 @@ impl OpenTypeFile {
             entry_selector: Self::parse_entry_selector(content),
             range_shift: Self::parse_range_shift(content),
             table_records: table_records,
-            cmap: match cmap_data {
-                Some(data) => Some(cmap::CmapTable::deserialize(data)),
-                None => None,
+            cmap: Self::deserialize_table(cmap_data, &cmap::CmapTable::deserialize),
+            name: Self::deserialize_table(name_data, &name::NameTable::deserialize),
+        }
+    }
+
+    fn deserialize_table<T: Debug, E: Debug>(data: Option<&[u8]>, deserialize_fn: &Fn(&[u8]) -> Result<T, E>) -> Option<T> {
+        match data {
+            Some(data) => match deserialize_fn(data) {
+                Ok(table) => Some(table),
+                Err(err) => panic!("Error deserializing name table {:?}", err),
             },
+            None => None,
         }
     }
 
@@ -94,6 +107,7 @@ impl OpenTypeFile {
 
 enum TableType {
     Cmap,
+    Name,
     Unknown,
 }
 
@@ -117,7 +131,8 @@ impl TableRecord {
 
     fn table_type(&self) -> TableType {
         match self.tag {
-            ['c' , 'm' , 'a' , 'p'] => TableType::Cmap,
+            ['c', 'm', 'a', 'p'] => TableType::Cmap,
+            ['n', 'a', 'm', 'e'] => TableType::Name,
             _ => TableType::Unknown,
         }
     }
