@@ -5,7 +5,6 @@ use byteorder::{ByteOrder, BigEndian};
 const U16_LENGTH: usize = 2;
 const VERSION_OFFSET: usize = 0;
 const NUM_TABLES_OFFSET: usize = 2;
-const NUM_TABLES_LENGTH: usize = 2;
 
 #[derive(Debug)]
 pub struct CmapTable {
@@ -40,6 +39,8 @@ pub enum ParseError {
 
 #[derive(Debug, PartialEq)]
 pub enum Version {
+  // V0 is, in fact, the only documented version so far.
+  // https://docs.microsoft.com/en-us/typography/opentype/spec/cmap
   Version0,
 }
 
