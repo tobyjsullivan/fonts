@@ -16,4 +16,4 @@ before_script:
 script:
   - cargo clean
   - cargo fmt --all -- --check
-  - cargo test -- --nocapture
+  - cargo test --all -- --nocapture
