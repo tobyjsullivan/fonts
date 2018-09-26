@@ -83,3 +83,31 @@ pub enum ParseError {
     /// The Encoding ID hasn't been implemented yet.
     UnknownEncodingID,
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use opentype::name::encoding::MacintoshEncoding;
+
+    const SAMPLE_NAME_RECORD: [u8; 12] = [0u8, 1, 0, 0, 0, 0, 0, 0, 0, 47, 0, 0];
+
+    #[test]
+    fn deserialize_name_record() {
+        let result = NameRecord::deserialize(&SAMPLE_NAME_RECORD);
+        let record = result.unwrap();
+
+        assert_eq!(record.platform, Platform::Macintosh);
+        assert_eq!(
+            record.encoding,
+            Encoding::Macintosh {
+                encoding: MacintoshEncoding::Roman
+            }
+        );
+        assert_eq!(record.language_id, 0u16);
+        assert_eq!(record.name_id, 0);
+        assert_eq!(record.name, Some(Name::CopyrightNotice));
+        assert_eq!(record.string_length, 47);
+        assert_eq!(record.string_offset, 0);
+    }
+}

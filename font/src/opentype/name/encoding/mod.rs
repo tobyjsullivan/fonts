@@ -3,11 +3,11 @@ mod macintosh;
 mod unicode;
 mod windows;
 
-use self::iso::ISOEncoding;
-use self::macintosh::MacintoshEncoding;
-use self::unicode::UnicodeEncoding;
-use self::windows::WindowsEncoding;
-use super::platform::Platform;
+pub use self::iso::ISOEncoding;
+pub use self::macintosh::MacintoshEncoding;
+pub use self::unicode::UnicodeEncoding;
+pub use self::windows::WindowsEncoding;
+pub use super::platform::Platform;
 
 #[derive(Debug, PartialEq)]
 pub enum Encoding {

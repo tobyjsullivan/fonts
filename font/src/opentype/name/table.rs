@@ -73,3 +73,34 @@ pub enum Format {
     Format0,
     Format1,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SAMPLE_HEADER: [u8; 6] = [0u8, 0, 0, 26, 1, 62];
+
+    #[test]
+    fn parse_format_0() {
+        let mut data = vec![0u8; 1062];
+        data[..6].clone_from_slice(&SAMPLE_HEADER);
+
+        assert_eq!(NameTable::parse_format(&data), Ok(Format::Format0));
+    }
+
+    #[test]
+    fn parse_record_count() {
+        let mut data = vec![0u8; 1062];
+        data[..6].clone_from_slice(&SAMPLE_HEADER);
+
+        assert_eq!(NameTable::parse_record_count(&data), 26);
+    }
+
+    #[test]
+    fn parse_string_offset() {
+        let mut data = vec![0u8; 1062];
+        data[..6].clone_from_slice(&SAMPLE_HEADER);
+
+        assert_eq!(NameTable::parse_string_offset(&data), 318);
+    }
+}
