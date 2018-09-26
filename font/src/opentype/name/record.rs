@@ -7,12 +7,12 @@ const U16_LENGTH: usize = 2;
 
 #[derive(Debug, PartialEq)]
 pub struct NameRecord {
-    platform: Platform,
-    encoding: Encoding,
+    pub platform: Platform,
+    pub encoding: Encoding,
     language_id: u16,
     name_id: u16,
-    name: Option<Name>,
-    string_length: u16,
+    pub name: Option<Name>,
+    string_length: usize,
     string_offset: usize,
 }
 
@@ -34,6 +34,10 @@ impl NameRecord {
             string_length: Self::parse_string_length(data),
             string_offset: Self::parse_string_offset(data),
         })
+    }
+
+    pub fn parse_value<'a>(&self, string_storage: &'a [u8]) -> &'a [u8] {
+        &string_storage[self.string_offset..self.string_offset + self.string_length]
     }
 
     fn parse_platform(data: &[u8]) -> Result<Platform, ParseError> {
@@ -59,10 +63,10 @@ impl NameRecord {
         BigEndian::read_u16(&data[Self::NAME_ID_OFFSET..Self::NAME_ID_OFFSET + U16_LENGTH])
     }
 
-    fn parse_string_length(data: &[u8]) -> u16 {
+    fn parse_string_length(data: &[u8]) -> usize {
         BigEndian::read_u16(
             &data[Self::STRING_LENGTH_OFFSET..Self::STRING_LENGTH_OFFSET + U16_LENGTH],
-        )
+        ) as usize
     }
 
     fn parse_string_offset(data: &[u8]) -> usize {
@@ -89,6 +93,10 @@ mod tests {
     use super::*;
     use opentype::name::encoding::MacintoshEncoding;
 
+    const SAMPLE_TABLE: [u8; 32] = [
+        0u8, 0, 0, 1, 0, 18, 0, 0, 0, 0, 0, 0, 0, 1, 0, 14, 0, 0, 0, 82, 0, 101, 0, 103, 0, 117, 0,
+        108, 0, 97, 0, 114,
+    ];
     const SAMPLE_NAME_RECORD: [u8; 12] = [0u8, 1, 0, 0, 0, 0, 0, 0, 0, 47, 0, 0];
 
     #[test]
@@ -108,5 +116,15 @@ mod tests {
         assert_eq!(record.name, Some(Name::CopyrightNotice));
         assert_eq!(record.string_length, 47);
         assert_eq!(record.string_offset, 0);
+    }
+
+    #[test]
+    fn parse_name_value() {
+        let record = NameRecord::deserialize(&SAMPLE_TABLE[6..18]).unwrap();
+
+        let result = record.parse_value(&SAMPLE_TABLE[18..32]);
+
+        const EXPECTED: [u8; 14] = [0u8, 82, 0, 101, 0, 103, 0, 117, 0, 108, 0, 97, 0, 114];
+        assert_eq!(result, &EXPECTED);
     }
 }
