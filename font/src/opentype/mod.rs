@@ -1,4 +1,4 @@
-use byteorder::{ByteOrder, BigEndian};
+use byteorder::{BigEndian, ByteOrder};
 use std::fmt::Debug;
 
 mod cmap;
@@ -43,7 +43,7 @@ impl OpenTypeFile {
             match record.table_type() {
                 TableType::Cmap => cmap_data = Some(record.table_data(content)),
                 TableType::Name => name_data = Some(record.table_data(content)),
-                TableType::Unknown => {},
+                TableType::Unknown => {}
             }
         }
 
@@ -58,7 +58,10 @@ impl OpenTypeFile {
         }
     }
 
-    fn deserialize_table<T: Debug, E: Debug>(data: Option<&[u8]>, deserialize_fn: &Fn(&[u8]) -> Result<T, E>) -> Option<T> {
+    fn deserialize_table<T: Debug, E: Debug>(
+        data: Option<&[u8]>,
+        deserialize_fn: &Fn(&[u8]) -> Result<T, E>,
+    ) -> Option<T> {
         match data {
             Some(data) => match deserialize_fn(data) {
                 Ok(table) => Some(table),
@@ -69,23 +72,23 @@ impl OpenTypeFile {
     }
 
     pub fn detect(content: &[u8]) -> bool {
-        &content[HEADER_OFFSET..HEADER_OFFSET+HEADER_LENGTH] == &HEADER
+        &content[HEADER_OFFSET..HEADER_OFFSET + HEADER_LENGTH] == &HEADER
     }
 
     fn parse_num_tables(content: &[u8]) -> u16 {
-        BigEndian::read_u16(&content[NUM_TABLES_OFFSET..NUM_TABLES_OFFSET+2])
+        BigEndian::read_u16(&content[NUM_TABLES_OFFSET..NUM_TABLES_OFFSET + 2])
     }
 
     fn parse_search_range(content: &[u8]) -> u16 {
-        BigEndian::read_u16(&content[SEARCH_RANGE_OFFSET..SEARCH_RANGE_OFFSET+2])
+        BigEndian::read_u16(&content[SEARCH_RANGE_OFFSET..SEARCH_RANGE_OFFSET + 2])
     }
 
     fn parse_entry_selector(content: &[u8]) -> u16 {
-        BigEndian::read_u16(&content[ENTRY_SELECTION_OFFSET..ENTRY_SELECTION_OFFSET+2])
+        BigEndian::read_u16(&content[ENTRY_SELECTION_OFFSET..ENTRY_SELECTION_OFFSET + 2])
     }
 
     fn parse_range_shift(content: &[u8]) -> u16 {
-        BigEndian::read_u16(&content[RANGE_SHIFT_OFFSET..RANGE_SHIFT_OFFSET+2])
+        BigEndian::read_u16(&content[RANGE_SHIFT_OFFSET..RANGE_SHIFT_OFFSET + 2])
     }
 
     fn parse_table_records(content: &[u8]) -> Vec<TableRecord> {
@@ -99,7 +102,7 @@ impl OpenTypeFile {
 
     fn parse_nth_table_record(content: &[u8], n: usize) -> TableRecord {
         let offset = TABLE_RECORDS_OFFSET + n * TABLE_RECORD_LENGTH;
-        let record_content: &[u8] = &content[offset..offset+TABLE_RECORD_LENGTH];
+        let record_content: &[u8] = &content[offset..offset + TABLE_RECORD_LENGTH];
 
         TableRecord::deserialize(record_content)
     }
@@ -138,24 +141,29 @@ impl TableRecord {
     }
 
     fn table_data<'a>(&self, content: &'a [u8]) -> &'a [u8] {
-        &content[self.offset..self.offset+self.length]
+        &content[self.offset..self.offset + self.length]
     }
 
     fn parse_tag(content: &[u8]) -> [char; 4] {
-        let tag = &content[TABLE_TAG_OFFSET..TABLE_TAG_OFFSET+TABLE_TAG_LENGTH];
-        [tag[0] as char, tag[1] as char, tag[2] as char, tag[3] as char]
+        let tag = &content[TABLE_TAG_OFFSET..TABLE_TAG_OFFSET + TABLE_TAG_LENGTH];
+        [
+            tag[0] as char,
+            tag[1] as char,
+            tag[2] as char,
+            tag[3] as char,
+        ]
     }
 
     fn parse_checksum(content: &[u8]) -> u32 {
-        BigEndian::read_u32(&content[TABLE_CHECKSUM_OFFSET..TABLE_CHECKSUM_OFFSET+4])
+        BigEndian::read_u32(&content[TABLE_CHECKSUM_OFFSET..TABLE_CHECKSUM_OFFSET + 4])
     }
 
     fn parse_offset(content: &[u8]) -> usize {
-        BigEndian::read_u32(&content[TABLE_OFFSET_OFFSET..TABLE_OFFSET_OFFSET+4]) as usize
+        BigEndian::read_u32(&content[TABLE_OFFSET_OFFSET..TABLE_OFFSET_OFFSET + 4]) as usize
     }
 
     fn parse_length(content: &[u8]) -> usize {
-        BigEndian::read_u32(&content[TABLE_LENGTH_OFFSET..TABLE_LENGTH_OFFSET+4]) as usize
+        BigEndian::read_u32(&content[TABLE_LENGTH_OFFSET..TABLE_LENGTH_OFFSET + 4]) as usize
     }
 }
 
@@ -181,11 +189,8 @@ mod tests {
     fn parse_header() {
         let mut content = vec![0x00u8; 47252];
         content[..12].clone_from_slice(&[
-            0x00u8, 0x01, 0x00, 0x00,
-            0x00, 0x11,
-            0x01, 0x00,
-            0x00, 0x04,
-            0x00, 0x10]);
+            0x00u8, 0x01, 0x00, 0x00, 0x00, 0x11, 0x01, 0x00, 0x00, 0x04, 0x00, 0x10,
+        ]);
         assert_eq!(OpenTypeFile::parse_num_tables(&content), 17);
         assert_eq!(OpenTypeFile::parse_search_range(&content), 256);
         assert_eq!(OpenTypeFile::parse_entry_selector(&content), 4);
@@ -196,8 +201,8 @@ mod tests {
     fn parse_table_records() {
         let mut content = vec![0x00u8; 47252];
         content[5] = 0x12;
-        content[12..12+4].clone_from_slice(&[0x6Eu8, 0x61, 0x6D, 0x65]);
-        content[12+32..12+32+4].clone_from_slice(&[0x67u8, 0x6C, 0x79, 0x66]);
+        content[12..12 + 4].clone_from_slice(&[0x6Eu8, 0x61, 0x6D, 0x65]);
+        content[12 + 32..12 + 32 + 4].clone_from_slice(&[0x67u8, 0x6C, 0x79, 0x66]);
 
         let table_records = OpenTypeFile::parse_table_records(&content);
 
@@ -209,8 +214,8 @@ mod tests {
     #[test]
     fn parse_nth_table_record_first() {
         let mut content = vec![0x00u8; 47252];
-        content[12..12+4].clone_from_slice(&[0x6Eu8, 0x61, 0x6D, 0x65]);
-        content[16..16+4].clone_from_slice(&[0xFCu8, 0xFD, 0xFE, 0xFF]);
+        content[12..12 + 4].clone_from_slice(&[0x6Eu8, 0x61, 0x6D, 0x65]);
+        content[16..16 + 4].clone_from_slice(&[0xFCu8, 0xFD, 0xFE, 0xFF]);
 
         let rec0 = OpenTypeFile::parse_nth_table_record(&content, 0);
         assert_eq!(rec0.tag, ['n', 'a', 'm', 'e']);
@@ -220,7 +225,7 @@ mod tests {
     #[test]
     fn parse_nth_table_record_offset() {
         let mut content = vec![0x00u8; 47252];
-        content[12+32..12+32+4].clone_from_slice(&[0x6Eu8, 0x61, 0x6D, 0x65]);
+        content[12 + 32..12 + 32 + 4].clone_from_slice(&[0x6Eu8, 0x61, 0x6D, 0x65]);
 
         let rec2 = OpenTypeFile::parse_nth_table_record(&content, 2);
         assert_eq!(rec2.tag, ['n', 'a', 'm', 'e']);
