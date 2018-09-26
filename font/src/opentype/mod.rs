@@ -20,18 +20,18 @@ const TABLE_OFFSET_OFFSET: usize = 8;
 const TABLE_LENGTH_OFFSET: usize = 12;
 
 #[derive(Debug)]
-pub struct OpenTypeFile {
+pub struct OpenTypeFile<'a> {
     num_tables: u16,
     search_range: u16,
     entry_selector: u16,
     range_shift: u16,
     table_records: Vec<TableRecord>,
     cmap: Option<cmap::CmapTable>,
-    name: Option<name::NameTable>,
+    name: Option<name::NameTable<'a>>,
 }
 
-impl OpenTypeFile {
-    pub fn deserialize(content: &[u8]) -> Self {
+impl<'a> OpenTypeFile<'a> {
+    pub fn deserialize(content: &'a [u8]) -> Self {
         if !Self::detect(content) {
             panic!("Incorrect file type.");
         }
@@ -59,8 +59,8 @@ impl OpenTypeFile {
     }
 
     fn deserialize_table<T: Debug, E: Debug>(
-        data: Option<&[u8]>,
-        deserialize_fn: &Fn(&[u8]) -> Result<T, E>,
+        data: Option<&'a [u8]>,
+        deserialize_fn: &Fn(&'a [u8]) -> Result<T, E>,
     ) -> Option<T> {
         match data {
             Some(data) => match deserialize_fn(data) {
