@@ -1,0 +1,18 @@
+language: rust
+sudo: false
+dist: xenial
+
+cache:
+  cargo: true
+
+matrix:
+  include:
+    - rust: stable
+
+before_script:
+  - export PATH=$PATH:~/.cargo/bin
+
+script:
+  - cargo clean
+  - cargo fmt --all -- --check
+  - cargo test -- --nocapture
