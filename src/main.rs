@@ -18,7 +18,7 @@ fn main() {
     let mut data: Vec<u8> = vec![];
     f.read_to_end(&mut data).unwrap();
 
-    println!("File read in. {} bytes.", data.len());
+    println!("Finished reading {} bytes.", data.len());
 
     match Font::from(&data) {
         Ok(parsed) => {
