@@ -9,7 +9,7 @@ const U16_LENGTH: usize = 2;
 /// The name table stores strings which represent various metadata in
 /// the font (e.g., foundry name, font name, etc.).
 #[derive(Debug)]
-pub struct NameTable {
+pub struct NameTable<'a> {
     /// NameTable comes in two formats, 0 and 1.
     /// The latter supports language-tag records.
     pub format: Format,
@@ -19,9 +19,10 @@ pub struct NameTable {
     pub string_offset: usize,
     /// The parsed name records.
     pub name_records: Vec<NameRecord>,
+    string_storage: &'a [u8],
 }
 
-impl NameTable {
+impl<'a> NameTable<'a> {
     const FORMAT_OFFSET: usize = 0;
     const COUNT_OFFSET: usize = 2;
     const STRING_OFFSET_OFFSET: usize = 4;
@@ -29,19 +30,19 @@ impl NameTable {
     const NAME_RECORD_LENGTH: usize = 12;
 
     /// Deserialize the name table from font file data.
-    pub fn deserialize(table_data: &[u8]) -> Result<Self, ParseError> {
-        println!("name table data: {:?}", table_data);
+    pub fn deserialize(table_data: &'a [u8]) -> Result<Self, ParseError> {
+        let string_offset: usize = Self::parse_string_offset(table_data);
         Ok(NameTable {
             format: Self::parse_format(table_data)?,
             count: Self::parse_record_count(table_data),
-            string_offset: Self::parse_string_offset(table_data),
+            string_offset: string_offset,
             name_records: Self::parse_name_records(table_data)?,
+            string_storage: Self::parse_string_storage(table_data, string_offset),
         })
     }
 
-    pub fn parse_value<'a>(
+    pub fn read_string_value(
         &self,
-        table_data: &'a [u8],
         platform: Platform,
         encoding: Encoding,
         name: Name,
@@ -52,18 +53,18 @@ impl NameTable {
                 && record.encoding == encoding
                 && record.name == Some(name.clone())
             {
-                let storage = self.string_storage(table_data);
                 result = Some(
-                    &storage[record.string_offset..record.string_offset + record.string_length],
+                    &self.string_storage
+                        [record.string_offset..record.string_offset + record.string_length],
                 );
             }
         }
         result
     }
 
-    fn string_storage<'a>(&self, table_data: &'a [u8]) -> &'a [u8] {
-        let storage_length = table_data.len() - self.string_offset as usize;
-        &table_data[self.string_offset..self.string_offset + storage_length]
+    fn parse_string_storage<'b>(table_data: &'b [u8], offset: usize) -> &'b [u8] {
+        let storage_length = table_data.len() - offset as usize;
+        &table_data[offset..offset + storage_length]
     }
 
     fn parse_format(data: &[u8]) -> Result<Format, ParseError> {
@@ -141,10 +142,9 @@ mod tests {
     }
 
     #[test]
-    fn parse_value() {
+    fn read_string_value() {
         let table = NameTable::deserialize(&SAMPLE_TABLE).unwrap();
-        let result = table.parse_value(
-            &SAMPLE_TABLE,
+        let result = table.read_string_value(
             Platform::Unicode,
             Encoding::Unicode {
                 encoding: encoding::UnicodeEncoding::Unicode1,
