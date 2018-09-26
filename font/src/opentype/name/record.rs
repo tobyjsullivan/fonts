@@ -7,13 +7,13 @@ const U16_LENGTH: usize = 2;
 
 #[derive(Debug, PartialEq)]
 pub struct NameRecord {
-    platform: Platform,
-    encoding: Encoding,
+    pub platform: Platform,
+    pub encoding: Encoding,
     language_id: u16,
     name_id: u16,
-    name: Option<Name>,
-    string_length: u16,
-    string_offset: usize,
+    pub name: Option<Name>,
+    pub string_length: usize,
+    pub string_offset: usize,
 }
 
 impl NameRecord {
@@ -24,15 +24,15 @@ impl NameRecord {
     const STRING_LENGTH_OFFSET: usize = 8;
     const STRING_OFFSET_OFFSET: usize = 10;
 
-    pub fn deserialize(data: &[u8]) -> Result<Self, ParseError> {
+    pub fn deserialize(record_data: &[u8]) -> Result<Self, ParseError> {
         Ok(Self {
-            platform: Self::parse_platform(data)?,
-            encoding: Self::parse_encoding(data)?,
-            language_id: Self::parse_language_id(data),
-            name_id: Self::parse_name_id(data),
-            name: Name::lookup(Self::parse_name_id(data)),
-            string_length: Self::parse_string_length(data),
-            string_offset: Self::parse_string_offset(data),
+            platform: Self::parse_platform(record_data)?,
+            encoding: Self::parse_encoding(record_data)?,
+            language_id: Self::parse_language_id(record_data),
+            name_id: Self::parse_name_id(record_data),
+            name: Name::lookup(Self::parse_name_id(record_data)),
+            string_length: Self::parse_string_length(record_data),
+            string_offset: Self::parse_string_offset(record_data),
         })
     }
 
@@ -59,10 +59,10 @@ impl NameRecord {
         BigEndian::read_u16(&data[Self::NAME_ID_OFFSET..Self::NAME_ID_OFFSET + U16_LENGTH])
     }
 
-    fn parse_string_length(data: &[u8]) -> u16 {
+    fn parse_string_length(data: &[u8]) -> usize {
         BigEndian::read_u16(
             &data[Self::STRING_LENGTH_OFFSET..Self::STRING_LENGTH_OFFSET + U16_LENGTH],
-        )
+        ) as usize
     }
 
     fn parse_string_offset(data: &[u8]) -> usize {

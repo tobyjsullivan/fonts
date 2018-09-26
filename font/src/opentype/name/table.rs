@@ -1,3 +1,6 @@
+use super::encoding::Encoding;
+use super::name::Name;
+use super::platform::Platform;
 use super::record::{NameRecord, ParseError};
 use byteorder::{BigEndian, ByteOrder};
 
@@ -13,7 +16,7 @@ pub struct NameTable {
     /// The number of name records in the table.
     pub count: u16,
     /// The offset of the string storage region (from the start of the table).
-    pub string_offset: u16,
+    pub string_offset: usize,
     /// The parsed name records.
     pub name_records: Vec<NameRecord>,
 }
@@ -26,13 +29,41 @@ impl NameTable {
     const NAME_RECORD_LENGTH: usize = 12;
 
     /// Deserialize the name table from font file data.
-    pub fn deserialize(data: &[u8]) -> Result<Self, ParseError> {
+    pub fn deserialize(table_data: &[u8]) -> Result<Self, ParseError> {
+        println!("name table data: {:?}", table_data);
         Ok(NameTable {
-            format: Self::parse_format(data)?,
-            count: Self::parse_record_count(data),
-            string_offset: Self::parse_string_offset(data),
-            name_records: Self::parse_name_records(data)?,
+            format: Self::parse_format(table_data)?,
+            count: Self::parse_record_count(table_data),
+            string_offset: Self::parse_string_offset(table_data),
+            name_records: Self::parse_name_records(table_data)?,
         })
+    }
+
+    pub fn parse_value<'a>(
+        &self,
+        table_data: &'a [u8],
+        platform: Platform,
+        encoding: Encoding,
+        name: Name,
+    ) -> Option<&'a [u8]> {
+        let mut result = None;
+        for record in &self.name_records {
+            if record.platform == platform
+                && record.encoding == encoding
+                && record.name == Some(name.clone())
+            {
+                let storage = self.string_storage(table_data);
+                result = Some(
+                    &storage[record.string_offset..record.string_offset + record.string_length],
+                );
+            }
+        }
+        result
+    }
+
+    fn string_storage<'a>(&self, table_data: &'a [u8]) -> &'a [u8] {
+        let storage_length = table_data.len() - self.string_offset as usize;
+        &table_data[self.string_offset..self.string_offset + storage_length]
     }
 
     fn parse_format(data: &[u8]) -> Result<Format, ParseError> {
@@ -47,10 +78,10 @@ impl NameTable {
         BigEndian::read_u16(&data[Self::COUNT_OFFSET..Self::COUNT_OFFSET + U16_LENGTH])
     }
 
-    fn parse_string_offset(data: &[u8]) -> u16 {
+    fn parse_string_offset(data: &[u8]) -> usize {
         BigEndian::read_u16(
             &data[Self::STRING_OFFSET_OFFSET..Self::STRING_OFFSET_OFFSET + U16_LENGTH],
-        )
+        ) as usize
     }
 
     fn parse_name_records(data: &[u8]) -> Result<Vec<NameRecord>, ParseError> {
@@ -77,7 +108,12 @@ pub enum Format {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use opentype::name::encoding;
 
+    const SAMPLE_TABLE: [u8; 32] = [
+        0u8, 0, 0, 1, 0, 18, 0, 0, 0, 0, 0, 0, 0, 1, 0, 14, 0, 0, 0, 82, 0, 101, 0, 103, 0, 117, 0,
+        108, 0, 97, 0, 114,
+    ];
     const SAMPLE_HEADER: [u8; 6] = [0u8, 0, 0, 26, 1, 62];
 
     #[test]
@@ -102,5 +138,21 @@ mod tests {
         data[..6].clone_from_slice(&SAMPLE_HEADER);
 
         assert_eq!(NameTable::parse_string_offset(&data), 318);
+    }
+
+    #[test]
+    fn parse_value() {
+        let table = NameTable::deserialize(&SAMPLE_TABLE).unwrap();
+        let result = table.parse_value(
+            &SAMPLE_TABLE,
+            Platform::Unicode,
+            Encoding::Unicode {
+                encoding: encoding::UnicodeEncoding::Unicode1,
+            },
+            Name::FontFamilyName,
+        );
+
+        const EXPECTED: [u8; 14] = [0u8, 82, 0, 101, 0, 103, 0, 117, 0, 108, 0, 97, 0, 114];
+        assert_eq!(result, Some(&EXPECTED[..]));
     }
 }
