@@ -1,8 +1,10 @@
 pub mod encoding;
+pub mod platform;
 
 use byteorder::{ByteOrder, BigEndian};
 
-use self::encoding::{Platform, Encoding};
+use self::encoding::Encoding;
+use self::platform::Platform;
 
 const U16_LENGTH: usize = 2;
 
@@ -120,7 +122,7 @@ impl NameRecord {
 
   fn parse_platform(data: &[u8]) -> Result<Platform, ParseError> {
     let platform_id = BigEndian::read_u16(&data[Self::PLATFORM_ID_OFFSET..Self::PLATFORM_ID_OFFSET+U16_LENGTH]);
-    encoding::Platform::lookup(platform_id).ok_or(ParseError::UnknownPlatformID)
+    Platform::lookup(platform_id).ok_or(ParseError::UnknownPlatformID)
   }
 
   fn parse_encoding(data: &[u8]) -> Result<Encoding, ParseError> {
