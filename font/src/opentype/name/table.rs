@@ -1,4 +1,4 @@
-use super::encoding::{Encoding, UnicodeEncoding};
+use super::encoding::Encoding;
 use super::name::Name;
 use super::platform::Platform;
 use super::record::{NameRecord, ParseError};
@@ -53,7 +53,9 @@ impl NameTable {
                 && record.name == Some(name.clone())
             {
                 let storage = self.string_storage(table_data);
-                result = Some(record.parse_value(storage));
+                result = Some(
+                    &storage[record.string_offset..record.string_offset + record.string_length],
+                );
             }
         }
         result
@@ -105,6 +107,7 @@ pub enum Format {
 
 #[cfg(test)]
 mod tests {
+    use super::super::encoding;
     use super::*;
 
     const SAMPLE_TABLE: [u8; 32] = [
@@ -144,7 +147,7 @@ mod tests {
             &SAMPLE_TABLE,
             Platform::Unicode,
             Encoding::Unicode {
-                encoding: UnicodeEncoding::Unicode1,
+                encoding: encoding::UnicodeEncoding::Unicode1,
             },
             Name::FontFamilyName,
         );
