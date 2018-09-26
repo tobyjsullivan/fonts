@@ -41,6 +41,7 @@ impl<'a> NameTable<'a> {
         })
     }
 
+    /// Read out the specified string value if it exists in the name table.
     pub fn read_string_value(
         &self,
         platform: Platform,
