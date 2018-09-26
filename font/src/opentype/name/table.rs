@@ -107,8 +107,8 @@ pub enum Format {
 
 #[cfg(test)]
 mod tests {
-    use super::super::encoding;
     use super::*;
+    use opentype::name::encoding;
 
     const SAMPLE_TABLE: [u8; 32] = [
         0u8, 0, 0, 1, 0, 18, 0, 0, 0, 0, 0, 0, 0, 1, 0, 14, 0, 0, 0, 82, 0, 101, 0, 103, 0, 117, 0,
