@@ -11,14 +11,22 @@ mod woff2;
 
 #[derive(Debug, PartialEq)]
 pub enum FileType {
-    OpenTypeWithTrueTypeOutlines, // https://docs.microsoft.com/en-us/typography/opentype/spec/otff
-    OpenTypeWithCFFData,          // https://docs.microsoft.com/en-us/typography/opentype/spec/otff
-    OpenTypeFontCollection,       // https://docs.microsoft.com/en-us/typography/opentype/spec/otff
-    PostScriptInSfnt, // https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6.html
-    AppleCompatibleTrueType, // https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6.html
-    Woff,                    // https://www.w3.org/TR/2012/REC-WOFF-20121213/
-    Woff2,                   // https://www.w3.org/TR/WOFF2/
-    EmbeddedOpenType,        // https://www.w3.org/Submission/EOT/#FileFormat
+    /// [https://docs.microsoft.com/en-us/typography/opentype/spec/otff](https://docs.microsoft.com/en-us/typography/opentype/spec/otff)
+    OpenTypeWithTrueTypeOutlines,
+    /// [https://docs.microsoft.com/en-us/typography/opentype/spec/otff](https://docs.microsoft.com/en-us/typography/opentype/spec/otff)
+    OpenTypeWithCFFData,
+    /// [https://docs.microsoft.com/en-us/typography/opentype/spec/otff](https://docs.microsoft.com/en-us/typography/opentype/spec/otff)
+    OpenTypeFontCollection,
+    /// [https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6.html](https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6.html)
+    PostScriptInSfnt,
+    /// [https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6.html](https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6.html)
+    AppleCompatibleTrueType,
+    /// [https://www.w3.org/TR/2012/REC-WOFF-20121213/](https://www.w3.org/TR/2012/REC-WOFF-20121213/)
+    Woff,
+    /// [https://www.w3.org/TR/WOFF2/](https://www.w3.org/TR/WOFF2/)
+    Woff2,
+    /// [https://www.w3.org/Submission/EOT/#FileFormat](https://www.w3.org/Submission/EOT/#FileFormat)
+    EmbeddedOpenType,
 }
 
 #[derive(Debug)]
