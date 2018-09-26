@@ -1,5 +1,6 @@
 extern crate byteorder;
 
+mod embedded_opentype;
 mod opentype;
 mod opentype_cff;
 mod opentype_collection;
@@ -7,18 +8,17 @@ mod postscript;
 mod truetype_apple;
 mod woff;
 mod woff2;
-mod embedded_opentype;
 
 #[derive(Debug, PartialEq)]
 pub enum FileType {
     OpenTypeWithTrueTypeOutlines, // https://docs.microsoft.com/en-us/typography/opentype/spec/otff
-    OpenTypeWithCFFData, // https://docs.microsoft.com/en-us/typography/opentype/spec/otff
-    OpenTypeFontCollection, // https://docs.microsoft.com/en-us/typography/opentype/spec/otff
+    OpenTypeWithCFFData,          // https://docs.microsoft.com/en-us/typography/opentype/spec/otff
+    OpenTypeFontCollection,       // https://docs.microsoft.com/en-us/typography/opentype/spec/otff
     PostScriptInSfnt, // https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6.html
     AppleCompatibleTrueType, // https://developer.apple.com/fonts/TrueType-Reference-Manual/RM06/Chap6.html
-    Woff, // https://www.w3.org/TR/2012/REC-WOFF-20121213/
-    Woff2, // https://www.w3.org/TR/WOFF2/
-    EmbeddedOpenType, // https://www.w3.org/Submission/EOT/#FileFormat
+    Woff,                    // https://www.w3.org/TR/2012/REC-WOFF-20121213/
+    Woff2,                   // https://www.w3.org/TR/WOFF2/
+    EmbeddedOpenType,        // https://www.w3.org/Submission/EOT/#FileFormat
 }
 
 #[derive(Debug)]
@@ -28,7 +28,7 @@ pub struct Font {
 
 #[derive(Debug)]
 pub enum FontParseErr {
-    UnrecognizedFormatError
+    UnrecognizedFormatError,
 }
 
 impl Font {
@@ -40,10 +40,8 @@ impl Font {
                     println!("OpenTypeFile: {:?}", parsed);
                 }
 
-                Ok(Font {
-                    file_type,
-                })
-            },
+                Ok(Font { file_type })
+            }
             None => Err(FontParseErr::UnrecognizedFormatError),
         }
     }
@@ -79,6 +77,9 @@ mod tests {
     fn detect_type() {
         let mut content = vec![0x00u8; 47252];
         content[..4].clone_from_slice(&[0x00u8, 0x01, 0x00, 0x00]);
-        assert_eq!(Font::detect_type(&content), Some(FileType::OpenTypeWithTrueTypeOutlines));
+        assert_eq!(
+            Font::detect_type(&content),
+            Some(FileType::OpenTypeWithTrueTypeOutlines)
+        );
     }
 }

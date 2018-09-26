@@ -23,7 +23,7 @@ fn main() {
     match Font::from(&data) {
         Ok(parsed) => {
             println!("Parsed: {:?}", parsed);
-        },
+        }
         Err(error) => {
             println!("Failed to parse: {:?}", error);
         }
