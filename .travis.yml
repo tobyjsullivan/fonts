@@ -11,6 +11,7 @@ matrix:
 
 before_script:
   - export PATH=$PATH:~/.cargo/bin
+  - rustup component add rustfmt-preview
 
 script:
   - cargo clean
