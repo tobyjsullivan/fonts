@@ -84,7 +84,6 @@ pub enum ParseError {
     UnknownEncodingID,
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

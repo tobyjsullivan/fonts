@@ -1,0 +1,19 @@
+language: rust
+sudo: false
+dist: xenial
+
+cache:
+  cargo: true
+
+matrix:
+  include:
+    - rust: stable
+
+before_script:
+  - export PATH=$PATH:~/.cargo/bin
+  - rustup component add rustfmt-preview
+
+script:
+  - cargo clean
+  - cargo fmt --all -- --check
+  - cargo test --all -- --nocapture
