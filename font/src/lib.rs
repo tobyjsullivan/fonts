@@ -30,8 +30,9 @@ pub enum FileType {
 }
 
 #[derive(Debug)]
-pub struct Font {
+pub struct Font<'a> {
     pub file_type: FileType,
+    font: ParsedFont<'a>,
 }
 
 #[derive(Debug)]
@@ -39,16 +40,23 @@ pub enum FontParseErr {
     UnrecognizedFormatError,
 }
 
-impl Font {
-    pub fn from(content: &Vec<u8>) -> Result<Self, FontParseErr> {
+#[derive(Debug)]
+enum ParsedFont<'a> {
+    OpenType(opentype::OpenTypeFile<'a>),
+    None,
+}
+
+impl<'a> Font<'a> {
+    pub fn from(content: &'a Vec<u8>) -> Result<Self, FontParseErr> {
         match Font::detect_type(content) {
             Some(file_type) => {
+                let mut font = ParsedFont::None;
                 if file_type == FileType::OpenTypeWithTrueTypeOutlines {
                     let parsed = opentype::OpenTypeFile::deserialize(content);
-                    println!("OpenTypeFile: {:?}", parsed);
+                    font = ParsedFont::OpenType(parsed);
                 }
 
-                Ok(Font { file_type })
+                Ok(Font { file_type, font })
             }
             None => Err(FontParseErr::UnrecognizedFormatError),
         }
