@@ -1,8 +1,10 @@
+mod tables;
+
 use byteorder::{BigEndian, ByteOrder};
 use std::fmt::Debug;
 
-mod cmap;
-mod name;
+use self::tables::cmap;
+use self::tables::name;
 
 const HEADER: [u8; 4] = [0x00u8, 0x01, 0x00, 0x00]; // 0x00010000
 const HEADER_OFFSET: usize = 0;
