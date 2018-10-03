@@ -39,12 +39,23 @@ impl<'a> OpenTypeFile<'a> {
         }
 
         let table_records = Self::parse_table_records(content);
-        let mut cmap_data: Option<&[u8]> = None;
-        let mut name_data: Option<&[u8]> = None;
+        let mut cmap: Option<cmap::CmapTable> = None;
+        let mut name: Option<name::NameTable> = None;
         for record in &table_records {
-            match record.table_type() {
-                TableType::Cmap => cmap_data = Some(record.table_data(content)),
-                TableType::Name => name_data = Some(record.table_data(content)),
+            let table_data = record.table_data(content);
+            match record.table_type {
+                TableType::Cmap => {
+                    cmap = Some(Self::deserialize_table(
+                        table_data,
+                        &cmap::CmapTable::deserialize,
+                    ))
+                }
+                TableType::Name => {
+                    name = Some(Self::deserialize_table(
+                        table_data,
+                        &name::NameTable::deserialize,
+                    ))
+                }
                 TableType::Unknown => {}
                 _ => {}
             }
@@ -56,21 +67,18 @@ impl<'a> OpenTypeFile<'a> {
             entry_selector: Self::parse_entry_selector(content),
             range_shift: Self::parse_range_shift(content),
             table_records: table_records,
-            cmap: Self::deserialize_table(cmap_data, &cmap::CmapTable::deserialize),
-            name: Self::deserialize_table(name_data, &name::NameTable::deserialize),
+            cmap: cmap,
+            name: name,
         }
     }
 
     fn deserialize_table<T: Debug, E: Debug>(
-        data: Option<&'a [u8]>,
+        data: &'a [u8],
         deserialize_fn: &Fn(&'a [u8]) -> Result<T, E>,
-    ) -> Option<T> {
-        match data {
-            Some(data) => match deserialize_fn(data) {
-                Ok(table) => Some(table),
-                Err(err) => panic!("Error deserializing name table {:?}", err),
-            },
-            None => None,
+    ) -> T {
+        match deserialize_fn(data) {
+            Ok(table) => table,
+            Err(err) => panic!("Error deserializing name table {:?}", err),
         }
     }
 
@@ -111,6 +119,7 @@ impl<'a> OpenTypeFile<'a> {
     }
 }
 
+#[derive(PartialEq, Debug)]
 enum TableType {
     /// Axis variations table
     Avar,
@@ -222,20 +231,23 @@ struct TableRecord {
     checksum: u32,
     offset: usize,
     length: usize,
+    table_type: TableType,
 }
 
 impl TableRecord {
     fn deserialize(content: &[u8]) -> Self {
+        let tag = Self::parse_tag(content);
         Self {
-            tag: Self::parse_tag(content),
+            tag: tag,
             checksum: Self::parse_checksum(content),
             offset: Self::parse_offset(content),
             length: Self::parse_length(content),
+            table_type: Self::table_type(tag),
         }
     }
 
-    fn table_type(&self) -> TableType {
-        match self.tag {
+    fn table_type(tag: [char; 4]) -> TableType {
+        match tag {
             // Tags with fewer than four characters, such as cvt, pad spaces on the end.
             ['a', 'v', 'a', 'r'] => TableType::Avar,
             ['B', 'A', 'S', 'E'] => TableType::Base,
@@ -360,6 +372,7 @@ mod tests {
         assert_eq!(table_records.len(), 18);
         assert_eq!(table_records[0].tag, ['n', 'a', 'm', 'e']);
         assert_eq!(table_records[2].tag, ['g', 'l', 'y', 'f']);
+        assert_eq!(table_records[2].table_type, TableType::Glyf);
     }
 
     #[test]
