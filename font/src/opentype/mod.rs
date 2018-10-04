@@ -27,7 +27,7 @@ impl<'a> OpenTypeFile<'a> {
 
         let mut cmap: Option<cmap::CmapTable> = None;
         let mut name: Option<name::NameTable> = None;
-        for record in &sfnt.table_records {
+        for record in &sfnt.tables {
             let table_type = TableType::table_type(record.tag);
             match table_type {
                 TableType::Cmap => {

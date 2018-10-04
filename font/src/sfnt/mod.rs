@@ -1,3 +1,37 @@
+//! The `sfnt` (Spline Font) file format is a table-based format consisting of a header
+//! followed by a series of concatenated tables.
+//!
+//! The `sfnt` file format is based on the original TrueType font file format
+//! introduced by Apple in 1991. After licensing the format to Microsoft, each
+//! company began iterating on their own variations. Eventually, the general
+//! format became known as `sfnt` with each implementation containing different
+//! sets of tables.
+//!
+//! This file format is the basis for virtually all modern font file formats.
+//! TrueType and OpenType fonts implement `sfnt` directly, whereas WOFF 1.0 and
+//! 2.0 consist of any `sfnt` file wrapped in an envelope and compressed.
+//!
+//! `SfntFile` can be used to parse a font file and enumerate and access table
+//! data.
+//!
+//! # Example
+//! Parsing a SFNT font file:
+//! ```
+//! use font::sfnt::SfntFile;
+//! use std::fs::File;
+//! use std::io::Read;
+//!
+//! fn main() {
+//!     let mut f = File::open("samples/empty.ttf").expect("file not found.");
+//!     let mut data: Vec<u8> = vec![];
+//!     f.read_to_end(&mut data).unwrap();
+//!
+//!     let sfnt = SfntFile::deserialize(&data);
+//!     for record in &sfnt.tables {
+//!         println!("{:?}", record);
+//!     }
+//! }
+//! ```
 use byteorder::{BigEndian, ByteOrder};
 use std::fmt;
 
@@ -13,13 +47,14 @@ const TABLE_CHECKSUM_OFFSET: usize = 4;
 const TABLE_OFFSET_OFFSET: usize = 8;
 const TABLE_LENGTH_OFFSET: usize = 12;
 
+/// A parsed `sfnt` file.
 #[derive(Debug)]
-pub(crate) struct SfntFile<'a> {
+pub struct SfntFile<'a> {
     num_tables: u16,
     search_range: u16,
     entry_selector: u16,
     range_shift: u16,
-    pub table_records: Vec<TableRecord<'a>>,
+    pub tables: Vec<Table<'a>>,
 }
 
 impl<'a> SfntFile<'a> {
@@ -29,7 +64,7 @@ impl<'a> SfntFile<'a> {
             search_range: Self::parse_search_range(content),
             entry_selector: Self::parse_entry_selector(content),
             range_shift: Self::parse_range_shift(content),
-            table_records: Self::parse_table_records(content),
+            tables: Self::parse_table_records(content),
         }
     }
 
@@ -49,8 +84,8 @@ impl<'a> SfntFile<'a> {
         BigEndian::read_u16(&content[RANGE_SHIFT_OFFSET..RANGE_SHIFT_OFFSET + 2])
     }
 
-    fn parse_table_records(content: &[u8]) -> Vec<TableRecord> {
-        let mut records: Vec<TableRecord> = vec![];
+    fn parse_table_records(content: &[u8]) -> Vec<Table> {
+        let mut records: Vec<Table> = vec![];
         let num_tables: usize = Self::parse_num_tables(content) as usize;
         for n in 0..num_tables {
             records.push(Self::parse_nth_table_record(content, n));
@@ -58,15 +93,16 @@ impl<'a> SfntFile<'a> {
         records
     }
 
-    fn parse_nth_table_record(content: &[u8], n: usize) -> TableRecord {
+    fn parse_nth_table_record(content: &[u8], n: usize) -> Table {
         let offset = TABLE_RECORDS_OFFSET + n * TABLE_RECORD_LENGTH;
         let record_content: &[u8] = &content[offset..offset + TABLE_RECORD_LENGTH];
 
-        TableRecord::deserialize(record_content, content)
+        Table::deserialize(record_content, content)
     }
 }
 
-pub(crate) struct TableRecord<'a> {
+/// An individual table from an `sfnt` file.
+pub struct Table<'a> {
     pub tag: [char; 4],
     checksum: u32,
     offset: usize,
@@ -74,7 +110,7 @@ pub(crate) struct TableRecord<'a> {
     pub table_data: &'a [u8],
 }
 
-impl<'a> fmt::Debug for TableRecord<'a> {
+impl<'a> fmt::Debug for Table<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -84,7 +120,7 @@ impl<'a> fmt::Debug for TableRecord<'a> {
     }
 }
 
-impl<'a> TableRecord<'a> {
+impl<'a> Table<'a> {
     fn deserialize(record_content: &'a [u8], file_content: &'a [u8]) -> Self {
         let tag = Self::parse_tag(record_content);
         let offset = Self::parse_offset(record_content);
@@ -183,7 +219,7 @@ mod tests {
         file_content[0..16].clone_from_slice(&rec_content);
         file_content[16..20].clone_from_slice(&[0x01u8, 0x02, 0x03, 0x04]);
 
-        let rec0 = TableRecord::deserialize(&rec_content, &file_content);
+        let rec0 = Table::deserialize(&rec_content, &file_content);
         assert_eq!(rec0.tag, ['n', 'a', 'm', 'e']);
         assert_eq!(rec0.checksum, 0xFCFDFEFF);
         assert_eq!(rec0.offset, 0x00000010);
