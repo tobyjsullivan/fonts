@@ -4,10 +4,10 @@
 
 ### PostScript Type 1
 Adobe released the PostScript language in 1984 as a tool for translating digital documents into print.[3]
-PostScript is a high-level language which describes documents as scripts.[1] 
+PostScript is a high-level language which describes documents as scripts.[1]
 These scripts are read by device-specific PostScript interpretters which produce device-appropriate raster data.
 
-PostScript Type 1 "font programs" were created by Adobe to represent letter and symbol shapes.[2] 
+PostScript Type 1 "font programs" were created by Adobe to represent letter and symbol shapes.[2]
 This font format was effectively a modified version of PostScript and also revolved around the execution of descriptive scripts.
 
 ### Compact Font Format (CFF)
@@ -28,6 +28,19 @@ A WOFF format font is just a regular OpenType font wrapped in an envelope and co
 For this reason, any OpenType font can be converted to a WOFF with relative ease (wrap and compress).
 
 ### WOFF2
+After the success of WOFF 1.0, the W3C introduced WOFF 2.0 with improved compression.[7]
+
+## SFNT (Spline Font)
+Since the introduction of TrueType in 1991, most fonts have used the same table-based file structure known as `sfnt` in some way.
+The `sfnt` file format consists of a binary header section followed by a series of concatenated tables (described in the header).
+TrueType, OpenType, and a PostScript-compatible font introduced by Apple (name yet to be discovered) all leverage this format exactly with the only meaningful variance being the specific information tables.
+The modern WOFF fonts (both 1.0 and 2.0) wrap any `sfnt` font in an envelope and apply compression.
+
+It's worth noting that the format inception doesn't stop there.
+The primary reason `sfnt` became so popular in the first place, and continues to be popular, is the unbounded flexibility of the tables - any data can be stored in a table.
+In fact, the PostScript-compatible `sfnt` font introduced by Apple simply took existing PostScript Type 1 fonts and stuffed them, verbatim, into a table tagged `post` so that it could be available for PostScript printers when needed.[9]
+Likewise, a later font format from Adobe called CFF is frequently put in a table called `CFF`.
+Eventually, the OpenType spec went so far as to define a `CFF2` table which contains the subset of the aforementioned `CFF` data which does not overlap with other, existing OpenType tables.[8]
 
 ## References
 
@@ -38,6 +51,9 @@ For this reason, any OpenType font can be converted to a WOFF with relative ease
 - [4] Microsoft. _TrueType Fundamentals_. Webpage. Accessed 2018-10-03. https://docs.microsoft.com/en-us/typography/opentype/spec/ttch01.
 - [5] Adobe. _The Compact Font Format Specification_. PDF File. Accessed 2018-10-03. http://wwwimages.adobe.com/www.adobe.com/content/dam/acom/en/devnet/font/pdfs/5176.CFF.pdf.
 - [6] W3C. _WOFF File Format 1.0_. Webpage. Accessed 2018-10-04. https://www.w3.org/TR/2012/REC-WOFF-20121213/.
+- [7] W3C. _WOFF File Format 2.0_. Webpage. Accessed 2018-10-04. https://www.w3.org/TR/WOFF2/.
+- [8] Microsoft. _CFF2 - Compact Font Format (CFF) Version 2_. Webpage. Accessed 2018-10-04. https://docs.microsoft.com/en-us/typography/opentype/spec/cff2.
+- [9] Microsoft. _post - PostScript Table_. Webpage. Accessed 2018-10-04. https://docs.microsoft.com/en-us/typography/opentype/spec/post.
 
 ## Resources
 
@@ -50,5 +66,5 @@ For this reason, any OpenType font can be converted to a WOFF with relative ease
 - Apple. 'TrueType Reference Manual'. https://developer.apple.com/fonts/TrueType-Reference-Manual/.
 - Microsoft. 'OpenType® specification'. https://docs.microsoft.com/en-us/typography/opentype/spec/.
 - Microsoft. 'TrueType Fundamentals'. https://docs.microsoft.com/en-us/typography/opentype/spec/ttch01.
-- W3C. 'WOFF File Format 1.0'. https://www.w3.org/TR/2012/REC-WOFF-20121213/
-- W3C. 'WOFF File Format 2.0'. https://www.w3.org/TR/WOFF2/
+- W3C. 'WOFF File Format 1.0'. https://www.w3.org/TR/2012/REC-WOFF-20121213/.
+- W3C. 'WOFF File Format 2.0'. https://www.w3.org/TR/WOFF2/.
