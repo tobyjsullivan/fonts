@@ -6,10 +6,6 @@ use self::tables::cmap;
 use self::tables::name;
 use super::sfnt::SfntFile;
 
-const HEADER: [u8; 4] = [0x00u8, 0x01, 0x00, 0x00]; // 0x00010000
-const HEADER_OFFSET: usize = 0;
-const HEADER_LENGTH: usize = 4;
-
 #[derive(Debug)]
 pub struct OpenTypeFile<'a> {
     sfnt: SfntFile<'a>,
@@ -19,10 +15,6 @@ pub struct OpenTypeFile<'a> {
 
 impl<'a> OpenTypeFile<'a> {
     pub fn deserialize(content: &'a [u8]) -> Self {
-        if !Self::detect(content) {
-            panic!("Incorrect file type.");
-        }
-
         let sfnt = SfntFile::deserialize(content);
 
         let mut cmap: Option<cmap::CmapTable> = None;
@@ -62,10 +54,6 @@ impl<'a> OpenTypeFile<'a> {
             Ok(table) => table,
             Err(err) => panic!("Error deserializing name table {:?}", err),
         }
-    }
-
-    pub fn detect(content: &[u8]) -> bool {
-        &content[HEADER_OFFSET..HEADER_OFFSET + HEADER_LENGTH] == &HEADER
     }
 }
 
@@ -231,24 +219,5 @@ impl TableType {
             ['V', 'V', 'A', 'R'] => TableType::Vvar,
             _ => TableType::Unknown,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn detect_type() {
-        let mut content = vec![0x00u8; 47252];
-        content[..4].clone_from_slice(&[0x00u8, 0x01, 0x00, 0x00]);
-        assert!(OpenTypeFile::detect(&content));
-    }
-
-    #[test]
-    fn detect_bad_type() {
-        let mut content = vec![0x00u8; 47252];
-        content[..4].clone_from_slice(&[0x00u8, 0x01, 0x00, 0x01]);
-        assert_eq!(OpenTypeFile::detect(&content), false);
     }
 }
