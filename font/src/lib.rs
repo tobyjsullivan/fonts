@@ -96,8 +96,7 @@ impl<'a> Font<'a> {
             Some(file_type) => {
                 let font = match file_type {
                     FileType::OpenTypeWithTrueTypeOutlines
-                    | FileType::OpenTypeWithCFFData
-                    | FileType::OpenTypeFontCollection => {
+                    | FileType::OpenTypeWithCFFData => {
                         ParsedFont::OpenType(opentype::OpenTypeFile::deserialize(content))
                     }
                     FileType::AppleCompatibleTrueType => {
