@@ -23,6 +23,9 @@ The original table-based structure of the TrueType font format was eventually ex
 OpenType is an extension of the TrueType format.[4]
 
 ### WOFF
+The World Wide Web Consortium (W3C) introduced WOFF 1.0 to make font files a little bit more friendly for web usage.[6]
+A WOFF format font is just a regular OpenType font wrapped in an envelope and compressed.
+For this reason, any OpenType font can be converted to a WOFF with relative ease (wrap and compress).
 
 ### WOFF2
 
@@ -34,6 +37,7 @@ OpenType is an extension of the TrueType format.[4]
 - [3] Adobe. _Adobe PostScript_. Webpage. Accessed 2018-10-03. https://www.adobe.com/products/postscript.html.
 - [4] Microsoft. _TrueType Fundamentals_. Webpage. Accessed 2018-10-03. https://docs.microsoft.com/en-us/typography/opentype/spec/ttch01.
 - [5] Adobe. _The Compact Font Format Specification_. PDF File. Accessed 2018-10-03. http://wwwimages.adobe.com/www.adobe.com/content/dam/acom/en/devnet/font/pdfs/5176.CFF.pdf.
+- [6] W3C. _WOFF File Format 1.0_. Webpage. Accessed 2018-10-04. https://www.w3.org/TR/2012/REC-WOFF-20121213/.
 
 ## Resources
 
@@ -46,3 +50,5 @@ OpenType is an extension of the TrueType format.[4]
 - Apple. 'TrueType Reference Manual'. https://developer.apple.com/fonts/TrueType-Reference-Manual/.
 - Microsoft. 'OpenType® specification'. https://docs.microsoft.com/en-us/typography/opentype/spec/.
 - Microsoft. 'TrueType Fundamentals'. https://docs.microsoft.com/en-us/typography/opentype/spec/ttch01.
+- W3C. 'WOFF File Format 1.0'. https://www.w3.org/TR/2012/REC-WOFF-20121213/
+- W3C. 'WOFF File Format 2.0'. https://www.w3.org/TR/WOFF2/
