@@ -5,6 +5,7 @@ mod opentype;
 mod opentype_cff;
 mod opentype_collection;
 mod postscript;
+mod sfnt;
 mod truetype_apple;
 mod woff;
 mod woff2;
