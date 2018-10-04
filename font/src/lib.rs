@@ -1,14 +1,8 @@
 extern crate byteorder;
 
-mod embedded_opentype;
 mod opentype;
-mod opentype_cff;
-mod opentype_collection;
-mod postscript;
 pub mod sfnt;
-mod truetype_apple;
-mod woff;
-mod woff2;
+mod truetype;
 
 #[derive(Debug, PartialEq)]
 pub enum FileType {
@@ -30,6 +24,54 @@ pub enum FileType {
     EmbeddedOpenType,
 }
 
+impl FileType {
+    const SFNT_HEADER_OFFSET: usize = 0;
+    const SFNT_HEADER_LENGTH: usize = 4;
+    const EOT_HEADER_OFFSET: usize = 8;
+    const EOT_HEADER_LENGTH: usize = 4;
+
+    pub(crate) fn detect(content: &Vec<u8>) -> Option<Self> {
+        let sfnt_result = Self::detect_sfnt(content);
+        sfnt_result.or_else(|| Self::detect_eot(content))
+    }
+
+    fn detect_sfnt(content: &Vec<u8>) -> Option<Self> {
+        let sfnt_header =
+            &content[Self::SFNT_HEADER_OFFSET..Self::SFNT_HEADER_OFFSET + Self::SFNT_HEADER_LENGTH];
+        match sfnt_header {
+            // 0x00010000
+            &[0x00u8, 0x01, 0x00, 0x00] => Some(FileType::OpenTypeWithTrueTypeOutlines),
+            // 'OTTO'
+            &[0x4F, 0x54, 0x54, 0x4F] => Some(FileType::OpenTypeWithCFFData),
+            // 'ttcf'
+            &[0x74, 0x74, 0x63, 0x66] => Some(FileType::OpenTypeFontCollection),
+            // 'typ1'
+            &[0x74, 0x79, 0x70, 0x31] => Some(FileType::PostScriptInSfnt),
+            // 'true'
+            &[0x74, 0x72, 0x75, 0x65] => Some(FileType::AppleCompatibleTrueType),
+            // 'wOFF'
+            &[0x77, 0x4F, 0x46, 0x46] => Some(FileType::Woff),
+            // 'wOF2'
+            &[0x77, 0x4F, 0x46, 0x32] => Some(FileType::Woff2),
+            _ => None,
+        }
+    }
+
+    fn detect_eot(content: &Vec<u8>) -> Option<Self> {
+        let eot_header =
+            &content[Self::EOT_HEADER_OFFSET..Self::EOT_HEADER_OFFSET + Self::EOT_HEADER_LENGTH];
+        match eot_header {
+            // '0x00010000' (little endian)
+            &[0x00, 0x00, 0x01, 0x00] |
+            // '0x00020001' (little endian)
+            &[0x01, 0x00, 0x02, 0x00] |
+            // '0x00020002' (little endian)
+            &[0x02, 0x00, 0x02, 0x00] => Some(FileType::EmbeddedOpenType),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Font<'a> {
     pub file_type: FileType,
@@ -44,44 +86,29 @@ pub enum FontParseErr {
 #[derive(Debug)]
 enum ParsedFont<'a> {
     OpenType(opentype::OpenTypeFile<'a>),
+    TrueType(truetype::TrueTypeFile<'a>),
     None,
 }
 
 impl<'a> Font<'a> {
     pub fn from(content: &'a Vec<u8>) -> Result<Self, FontParseErr> {
-        match Font::detect_type(content) {
+        match FileType::detect(content) {
             Some(file_type) => {
-                let mut font = ParsedFont::None;
-                if file_type == FileType::OpenTypeWithTrueTypeOutlines {
-                    let parsed = opentype::OpenTypeFile::deserialize(content);
-                    font = ParsedFont::OpenType(parsed);
-                }
+                let font = match file_type {
+                    FileType::OpenTypeWithTrueTypeOutlines
+                    | FileType::OpenTypeWithCFFData
+                    | FileType::OpenTypeFontCollection => {
+                        ParsedFont::OpenType(opentype::OpenTypeFile::deserialize(content))
+                    }
+                    FileType::AppleCompatibleTrueType => {
+                        ParsedFont::TrueType(truetype::TrueTypeFile::deserialize(content))
+                    }
+                    _ => ParsedFont::None,
+                };
 
                 Ok(Font { file_type, font })
             }
             None => Err(FontParseErr::UnrecognizedFormatError),
-        }
-    }
-
-    fn detect_type(content: &Vec<u8>) -> Option<FileType> {
-        if opentype::OpenTypeFile::detect(content) {
-            Some(FileType::OpenTypeWithTrueTypeOutlines)
-        } else if opentype_cff::OpenTypeCffFile::detect(content) {
-            Some(FileType::OpenTypeWithCFFData)
-        } else if opentype_collection::OpenTypeCollectionFile::detect(content) {
-            Some(FileType::OpenTypeFontCollection)
-        } else if postscript::PostScriptFile::detect(content) {
-            Some(FileType::PostScriptInSfnt)
-        } else if truetype_apple::TrueTypeFile::detect(content) {
-            Some(FileType::AppleCompatibleTrueType)
-        } else if woff::WoffFile::detect(content) {
-            Some(FileType::Woff)
-        } else if woff2::Woff2File::detect(content) {
-            Some(FileType::Woff2)
-        } else if embedded_opentype::EmbeddedOpenTypeFile::detect(content) {
-            Some(FileType::EmbeddedOpenType)
-        } else {
-            None
         }
     }
 }
@@ -95,7 +122,7 @@ mod tests {
         let mut content = vec![0x00u8; 47252];
         content[..4].clone_from_slice(&[0x00u8, 0x01, 0x00, 0x00]);
         assert_eq!(
-            Font::detect_type(&content),
+            FileType::detect(&content),
             Some(FileType::OpenTypeWithTrueTypeOutlines)
         );
     }
