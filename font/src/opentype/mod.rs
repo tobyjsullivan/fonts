@@ -4,6 +4,7 @@ use std::fmt::Debug;
 
 use self::tables::cmap::CmapTable;
 use self::tables::head::HeadTable;
+use self::tables::maxp::MaxpTable;
 use self::tables::name::NameTable;
 use super::sfnt::SfntFile;
 
@@ -12,6 +13,7 @@ pub struct OpenTypeFile<'a> {
     sfnt: SfntFile<'a>,
     cmap: Option<CmapTable>,
     head: Option<HeadTable<'a>>,
+    maxp: Option<MaxpTable>,
     name: Option<NameTable<'a>>,
 }
 
@@ -21,6 +23,7 @@ impl<'a> OpenTypeFile<'a> {
 
         let mut cmap = None;
         let mut head = None;
+        let mut maxp = None;
         let mut name = None;
         for record in &sfnt.tables {
             let table_type = TableType::table_type(record.tag);
@@ -33,6 +36,9 @@ impl<'a> OpenTypeFile<'a> {
                 }
                 TableType::Head => {
                     head = Some(HeadTable::parse(record.table_data));
+                }
+                TableType::Maxp => {
+                    maxp = Some(MaxpTable::parse(record.table_data));
                 }
                 TableType::Name => {
                     name = Some(Self::deserialize_table(
@@ -49,6 +55,7 @@ impl<'a> OpenTypeFile<'a> {
             sfnt,
             cmap,
             head,
+            maxp,
             name,
         }
     }
