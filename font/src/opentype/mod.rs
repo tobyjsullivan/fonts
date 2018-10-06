@@ -2,37 +2,43 @@ mod tables;
 
 use std::fmt::Debug;
 
-use self::tables::cmap;
-use self::tables::name;
+use self::tables::cmap::CmapTable;
+use self::tables::head::HeadTable;
+use self::tables::name::NameTable;
 use super::sfnt::SfntFile;
 
 #[derive(Debug)]
 pub struct OpenTypeFile<'a> {
     sfnt: SfntFile<'a>,
-    cmap: Option<cmap::CmapTable>,
-    name: Option<name::NameTable<'a>>,
+    cmap: Option<CmapTable>,
+    head: Option<HeadTable<'a>>,
+    name: Option<NameTable<'a>>,
 }
 
 impl<'a> OpenTypeFile<'a> {
     pub fn deserialize(content: &'a [u8]) -> Self {
         let sfnt = SfntFile::deserialize(content);
 
-        let mut cmap: Option<cmap::CmapTable> = None;
-        let mut name: Option<name::NameTable> = None;
+        let mut cmap = None;
+        let mut head = None;
+        let mut name = None;
         for record in &sfnt.tables {
             let table_type = TableType::table_type(record.tag);
             match table_type {
                 TableType::Cmap => {
                     cmap = Some(Self::deserialize_table(
                         record.table_data,
-                        &cmap::CmapTable::deserialize,
-                    ))
+                        &CmapTable::deserialize,
+                    ));
+                }
+                TableType::Head => {
+                    head = Some(HeadTable::parse(record.table_data));
                 }
                 TableType::Name => {
                     name = Some(Self::deserialize_table(
                         record.table_data,
-                        &name::NameTable::deserialize,
-                    ))
+                        &NameTable::deserialize,
+                    ));
                 }
                 TableType::Unknown => {}
                 _ => {}
@@ -40,9 +46,10 @@ impl<'a> OpenTypeFile<'a> {
         }
 
         Self {
-            sfnt: sfnt,
-            cmap: cmap,
-            name: name,
+            sfnt,
+            cmap,
+            head,
+            name,
         }
     }
 
