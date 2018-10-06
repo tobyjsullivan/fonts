@@ -2,17 +2,17 @@ mod tables;
 
 use std::fmt::Debug;
 
-use self::tables::cmap;
+use self::tables::cmap::CmapTable;
 use self::tables::head::HeadTable;
-use self::tables::name;
+use self::tables::name::NameTable;
 use super::sfnt::SfntFile;
 
 #[derive(Debug)]
 pub struct OpenTypeFile<'a> {
     sfnt: SfntFile<'a>,
-    cmap: Option<cmap::CmapTable>,
+    cmap: Option<CmapTable>,
     head: Option<HeadTable<'a>>,
-    name: Option<name::NameTable<'a>>,
+    name: Option<NameTable<'a>>,
 }
 
 impl<'a> OpenTypeFile<'a> {
@@ -28,7 +28,7 @@ impl<'a> OpenTypeFile<'a> {
                 TableType::Cmap => {
                     cmap = Some(Self::deserialize_table(
                         record.table_data,
-                        &cmap::CmapTable::deserialize,
+                        &CmapTable::deserialize,
                     ));
                 }
                 TableType::Head => {
@@ -37,7 +37,7 @@ impl<'a> OpenTypeFile<'a> {
                 TableType::Name => {
                     name = Some(Self::deserialize_table(
                         record.table_data,
-                        &name::NameTable::deserialize,
+                        &NameTable::deserialize,
                     ));
                 }
                 TableType::Unknown => {}
