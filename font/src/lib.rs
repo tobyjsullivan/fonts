@@ -1,4 +1,5 @@
 extern crate byteorder;
+extern crate fixed;
 
 mod opentype;
 pub mod sfnt;

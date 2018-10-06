@@ -5,3 +5,4 @@ authors = ["Toby Sullivan <toby.s@canva.com>"]
 
 [dependencies]
 byteorder = "1"
+fixed = "0.1.3"
