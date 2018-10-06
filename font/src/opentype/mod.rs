@@ -5,6 +5,7 @@ use std::fmt::Debug;
 
 use self::tables::cmap::CmapTable;
 use self::tables::head::HeadTable;
+use self::tables::loca::LocaTable;
 use self::tables::maxp::MaxpTable;
 use self::tables::name::NameTable;
 use super::sfnt::SfntFile;
@@ -14,6 +15,7 @@ pub struct OpenTypeFile<'a> {
     sfnt: SfntFile<'a>,
     cmap: Option<CmapTable>,
     head: Option<HeadTable>,
+    loca: Option<LocaTable>,
     maxp: Option<MaxpTable>,
     name: Option<NameTable<'a>>,
 }
@@ -24,6 +26,7 @@ impl<'a> OpenTypeFile<'a> {
 
         let mut cmap = None;
         let mut head = None;
+        let mut loca = None;
         let mut maxp = None;
         let mut name = None;
         for record in &sfnt.tables {
@@ -37,6 +40,9 @@ impl<'a> OpenTypeFile<'a> {
                 }
                 TableType::Head => {
                     head = Some(HeadTable::parse(record.table_data));
+                }
+                TableType::Loca => {
+                    loca = Some(LocaTable::parse(record.table_data));
                 }
                 TableType::Maxp => {
                     maxp = Some(MaxpTable::parse(record.table_data));
@@ -56,6 +62,7 @@ impl<'a> OpenTypeFile<'a> {
             sfnt,
             cmap,
             head,
+            loca,
             maxp,
             name,
         }
