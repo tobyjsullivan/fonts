@@ -87,7 +87,7 @@ pub enum ParseError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use opentype::name::encoding::MacintoshEncoding;
+    use opentype::tables::name::encoding::MacintoshEncoding;
 
     const SAMPLE_NAME_RECORD: [u8; 12] = [0u8, 1, 0, 0, 0, 0, 0, 0, 0, 47, 0, 0];
 
