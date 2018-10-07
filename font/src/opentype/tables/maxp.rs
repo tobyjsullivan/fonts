@@ -1,5 +1,6 @@
-use byteorder::{BigEndian, ByteOrder};
-use fixed::{frac::U16, FixedI32};
+use fixed::{frac, FixedI32};
+
+use opentype::types::{DataType, I32, U16};
 
 const OFFSET_VERSION: usize = 0;
 const OFFSET_NUM_GLYPHS: usize = 4;
@@ -8,7 +9,7 @@ const OFFSET_MAX_CONTOURS: usize = 8;
 const OFFSET_MAX_COMPOSITE_POINTS: usize = 10;
 const OFFSET_MAX_COMPOSITE_CONTOURS: usize = 12;
 const OFFSET_MAX_ZONES: usize = 14;
-const OFFSET_MAX_TWILIGHT_POINST: usize = 16;
+const OFFSET_MAX_TWILIGHT_POINTS: usize = 16;
 const OFFSET_MAX_STORAGE: usize = 18;
 const OFFSET_MAX_FUNC_DEFS: usize = 20;
 const OFFSET_MAX_INSTRUCTION_DEFS: usize = 22;
@@ -17,7 +18,7 @@ const OFFSET_MAX_SIZE_OF_INSTRUCTIONS: usize = 26;
 const OFFSET_MAX_COMPONENT_ELEMENTS: usize = 28;
 const OFFSET_MAX_COMPONENT_DEPTH: usize = 30;
 
-type Fixed = FixedI32<U16>;
+type Fixed = FixedI32<frac::U16>;
 
 #[derive(Debug)]
 pub struct MaxpTable {
@@ -56,24 +57,25 @@ impl MaxpTable {
         let mut max_comp_elements = None;
         let mut max_comp_depth = None;
         if version == Version::V1_0 {
-            max_points = Some(Self::parse_max_points(table_data));
-            max_contours = Some(Self::parse_max_contours(table_data));
-            max_comp_pts = Some(Self::parse_max_comp_pts(table_data));
-            max_comp_contours = Some(Self::parse_max_comp_contours(table_data));
-            max_zones = Some(Self::parse_max_zones(table_data));
-            max_twilight_points = Some(Self::parse_max_twilight_points(table_data));
-            max_storage = Some(Self::parse_max_storage(table_data));
-            max_func_defs = Some(Self::parse_max_func_defs(table_data));
-            max_instruction_defs = Some(Self::parse_max_instruction_defs(table_data));
-            max_stack_elements = Some(Self::parse_max_stack_elements(table_data));
-            max_size_of_instructions = Some(Self::parse_max_size_of_instructions(table_data));
-            max_comp_elements = Some(Self::parse_max_comp_elements(table_data));
-            max_comp_depth = Some(Self::parse_max_comp_depth(table_data));
+            max_points = Some(U16::extract(table_data, OFFSET_MAX_POINTS));
+            max_contours = Some(U16::extract(table_data, OFFSET_MAX_CONTOURS));
+            max_comp_pts = Some(U16::extract(table_data, OFFSET_MAX_COMPOSITE_POINTS));
+            max_comp_contours = Some(U16::extract(table_data, OFFSET_MAX_COMPOSITE_CONTOURS));
+            max_zones = Some(U16::extract(table_data, OFFSET_MAX_ZONES));
+            max_twilight_points = Some(U16::extract(table_data, OFFSET_MAX_TWILIGHT_POINTS));
+            max_storage = Some(U16::extract(table_data, OFFSET_MAX_STORAGE));
+            max_func_defs = Some(U16::extract(table_data, OFFSET_MAX_FUNC_DEFS));
+            max_instruction_defs = Some(U16::extract(table_data, OFFSET_MAX_INSTRUCTION_DEFS));
+            max_stack_elements = Some(U16::extract(table_data, OFFSET_MAX_STACK_ELEMENTS));
+            max_size_of_instructions =
+                Some(U16::extract(table_data, OFFSET_MAX_SIZE_OF_INSTRUCTIONS));
+            max_comp_elements = Some(U16::extract(table_data, OFFSET_MAX_COMPONENT_ELEMENTS));
+            max_comp_depth = Some(U16::extract(table_data, OFFSET_MAX_COMPONENT_DEPTH));
         }
 
         Self {
             version,
-            num_glyphs: Self::parse_num_glyphs(table_data),
+            num_glyphs: U16::extract(table_data, OFFSET_NUM_GLYPHS),
             max_points,
             max_contours,
             max_comp_pts,
@@ -91,78 +93,12 @@ impl MaxpTable {
     }
 
     fn parse_version(table_data: &[u8]) -> Version {
-        let value = BigEndian::read_i32(&table_data[OFFSET_VERSION..OFFSET_VERSION + 4]);
+        let value = I32::extract(table_data, OFFSET_VERSION);
         match value {
             0x00005000 => Version::V0_5,
             0x00010000 => Version::V1_0,
             _ => Version::Unknown(Fixed::from_bits(value)),
         }
-    }
-
-    fn parse_num_glyphs(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(&table_data[OFFSET_NUM_GLYPHS..OFFSET_NUM_GLYPHS + 2])
-    }
-
-    fn parse_max_points(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(&table_data[OFFSET_MAX_POINTS..OFFSET_MAX_POINTS + 2])
-    }
-
-    fn parse_max_contours(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(&table_data[OFFSET_MAX_CONTOURS..OFFSET_MAX_CONTOURS + 2])
-    }
-
-    fn parse_max_comp_pts(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(
-            &table_data[OFFSET_MAX_COMPOSITE_POINTS..OFFSET_MAX_COMPOSITE_POINTS + 2],
-        )
-    }
-
-    fn parse_max_comp_contours(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(
-            &table_data[OFFSET_MAX_COMPOSITE_CONTOURS..OFFSET_MAX_COMPOSITE_CONTOURS + 2],
-        )
-    }
-
-    fn parse_max_zones(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(&table_data[OFFSET_MAX_ZONES..OFFSET_MAX_ZONES + 2])
-    }
-
-    fn parse_max_twilight_points(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(&table_data[OFFSET_MAX_TWILIGHT_POINST..OFFSET_MAX_TWILIGHT_POINST + 2])
-    }
-
-    fn parse_max_storage(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(&table_data[OFFSET_MAX_STORAGE..OFFSET_MAX_STORAGE + 2])
-    }
-
-    fn parse_max_func_defs(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(&table_data[OFFSET_MAX_FUNC_DEFS..OFFSET_MAX_FUNC_DEFS + 2])
-    }
-
-    fn parse_max_instruction_defs(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(
-            &table_data[OFFSET_MAX_INSTRUCTION_DEFS..OFFSET_MAX_INSTRUCTION_DEFS + 2],
-        )
-    }
-
-    fn parse_max_stack_elements(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(&table_data[OFFSET_MAX_STACK_ELEMENTS..OFFSET_MAX_STACK_ELEMENTS + 2])
-    }
-
-    fn parse_max_size_of_instructions(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(
-            &table_data[OFFSET_MAX_SIZE_OF_INSTRUCTIONS..OFFSET_MAX_SIZE_OF_INSTRUCTIONS + 2],
-        )
-    }
-
-    fn parse_max_comp_elements(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(
-            &table_data[OFFSET_MAX_COMPONENT_ELEMENTS..OFFSET_MAX_COMPONENT_ELEMENTS + 2],
-        )
-    }
-
-    fn parse_max_comp_depth(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(&table_data[OFFSET_MAX_COMPONENT_DEPTH..OFFSET_MAX_COMPONENT_DEPTH + 2])
     }
 }
 

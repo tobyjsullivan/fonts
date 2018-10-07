@@ -1,4 +1,4 @@
-use byteorder::{BigEndian, ByteOrder};
+use opentype::types::{DataType, Datetime, Fixed, I16, U16, U32};
 
 const OFFSET_MAJOR_VERSION: usize = 0;
 const OFFSET_MINOR_VERSION: usize = 2;
@@ -19,15 +19,13 @@ const OFFSET_FONT_DIR_HINT: usize = 48;
 const OFFSET_INDEX_TO_LOC_FMT: usize = 50;
 const OFFSET_GLYPH_DATA_FMT: usize = 52;
 
-type Datetime = i64;
-
 #[derive(Debug)]
-pub struct HeadTable<'a> {
+pub struct HeadTable {
     major_version: u16,
     minor_version: u16,
-    font_revision: u32, // TODO: This should be a 32-bit fixed point number
+    font_revision: Fixed,
     checksum_adjustment: u32,
-    magic_number: &'a [u8],
+    magic_number: u32,
     flags: u16,
     units_per_em: u16,
     created: Datetime,
@@ -44,93 +42,32 @@ pub struct HeadTable<'a> {
     glyph_data_fmt: GlyphDataFormat,
 }
 
-impl<'a> HeadTable<'a> {
-    pub fn parse(table_data: &'a [u8]) -> Self {
+impl HeadTable {
+    pub fn parse(table_data: &[u8]) -> Self {
         Self {
-            major_version: Self::parse_major_version(table_data),
-            minor_version: Self::parse_minor_version(table_data),
-            font_revision: Self::parse_font_revision(table_data),
-            checksum_adjustment: Self::parse_checksum_adjustment(table_data),
-            magic_number: Self::parse_magic_number(table_data),
-            flags: Self::parse_flags(table_data),
-            units_per_em: Self::parse_units_per_em(table_data),
-            created: Self::parse_created(table_data),
-            modified: Self::parse_modified(table_data),
-            x_min: Self::parse_x_min(table_data),
-            y_min: Self::parse_y_min(table_data),
-            x_max: Self::parse_x_max(table_data),
-            y_max: Self::parse_y_max(table_data),
-            lowest_rec_ppem: Self::parse_lowest_rec_ppem(table_data),
-            mac_style: Self::parse_mac_style(table_data),
+            major_version: U16::extract(table_data, OFFSET_MAJOR_VERSION),
+            minor_version: U16::extract(table_data, OFFSET_MINOR_VERSION),
+            font_revision: Fixed::extract(table_data, OFFSET_FONT_REVISION),
+            checksum_adjustment: U32::extract(table_data, OFFSET_CHECKSUM_ADJ),
+            magic_number: U32::extract(table_data, OFFSET_MAGIC_NUMBER),
+            flags: U16::extract(table_data, OFFSET_FLAGS),
+            units_per_em: U16::extract(table_data, OFFSET_UNITS_PER_EM),
+            created: Datetime::extract(table_data, OFFSET_CREATED),
+            modified: Datetime::extract(table_data, OFFSET_MODIFIED),
+            x_min: I16::extract(table_data, OFFSET_X_MIN),
+            y_min: I16::extract(table_data, OFFSET_Y_MIN),
+            x_max: I16::extract(table_data, OFFSET_X_MAX),
+            y_max: I16::extract(table_data, OFFSET_Y_MAX),
+            lowest_rec_ppem: U16::extract(table_data, OFFSET_LOWEST_PPEM),
+            mac_style: U16::extract(table_data, OFFSET_MAC_STYLE),
             font_dir_hint: Self::parse_font_dir_hint(table_data),
             index_to_loc_fmt: Self::parse_index_to_loc_format(table_data),
             glyph_data_fmt: Self::parse_glyph_data_format(table_data),
         }
     }
 
-    fn parse_major_version(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(&table_data[OFFSET_MAJOR_VERSION..OFFSET_MAJOR_VERSION + 2])
-    }
-
-    fn parse_minor_version(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(&table_data[OFFSET_MINOR_VERSION..OFFSET_MINOR_VERSION + 2])
-    }
-
-    fn parse_font_revision(table_data: &[u8]) -> u32 {
-        BigEndian::read_u32(&table_data[OFFSET_FONT_REVISION..OFFSET_FONT_REVISION + 4])
-    }
-
-    fn parse_checksum_adjustment(table_data: &[u8]) -> u32 {
-        BigEndian::read_u32(&table_data[OFFSET_CHECKSUM_ADJ..OFFSET_CHECKSUM_ADJ + 4])
-    }
-
-    fn parse_magic_number(table_data: &'a [u8]) -> &'a [u8] {
-        &table_data[OFFSET_MAGIC_NUMBER..OFFSET_MAGIC_NUMBER + 4]
-    }
-
-    fn parse_flags(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(&table_data[OFFSET_FLAGS..OFFSET_FLAGS + 2])
-    }
-
-    fn parse_units_per_em(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(&table_data[OFFSET_UNITS_PER_EM..OFFSET_UNITS_PER_EM + 2])
-    }
-
-    fn parse_created(table_data: &[u8]) -> Datetime {
-        BigEndian::read_i64(&table_data[OFFSET_CREATED..OFFSET_CREATED + 8])
-    }
-
-    fn parse_modified(table_data: &[u8]) -> Datetime {
-        BigEndian::read_i64(&table_data[OFFSET_MODIFIED..OFFSET_MODIFIED + 8])
-    }
-
-    fn parse_x_min(table_data: &[u8]) -> i16 {
-        BigEndian::read_i16(&table_data[OFFSET_X_MIN..OFFSET_X_MIN + 2])
-    }
-
-    fn parse_y_min(table_data: &[u8]) -> i16 {
-        BigEndian::read_i16(&table_data[OFFSET_Y_MIN..OFFSET_Y_MIN + 2])
-    }
-
-    fn parse_x_max(table_data: &[u8]) -> i16 {
-        BigEndian::read_i16(&table_data[OFFSET_X_MAX..OFFSET_X_MAX + 2])
-    }
-
-    fn parse_y_max(table_data: &[u8]) -> i16 {
-        BigEndian::read_i16(&table_data[OFFSET_Y_MAX..OFFSET_Y_MAX + 2])
-    }
-
-    fn parse_lowest_rec_ppem(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(&table_data[OFFSET_LOWEST_PPEM..OFFSET_LOWEST_PPEM + 2])
-    }
-
-    fn parse_mac_style(table_data: &[u8]) -> u16 {
-        BigEndian::read_u16(&table_data[OFFSET_MAC_STYLE..OFFSET_MAC_STYLE + 2])
-    }
-
     fn parse_font_dir_hint(table_data: &[u8]) -> FontDirectionHint {
-        let value =
-            BigEndian::read_i16(&table_data[OFFSET_FONT_DIR_HINT..OFFSET_FONT_DIR_HINT + 2]);
+        let value = I16::extract(table_data, OFFSET_FONT_DIR_HINT);
         match value {
             -2 => FontDirectionHint::RightToLeftWithNeutrals,
             -1 => FontDirectionHint::RightToLeft,
@@ -142,8 +79,7 @@ impl<'a> HeadTable<'a> {
     }
 
     fn parse_index_to_loc_format(table_data: &[u8]) -> IndexToLocFormat {
-        let value =
-            BigEndian::read_i16(&table_data[OFFSET_INDEX_TO_LOC_FMT..OFFSET_INDEX_TO_LOC_FMT + 2]);
+        let value = I16::extract(table_data, OFFSET_INDEX_TO_LOC_FMT);
         match value {
             0 => IndexToLocFormat::ShortOffset,
             1 => IndexToLocFormat::LongOffset,
@@ -152,8 +88,7 @@ impl<'a> HeadTable<'a> {
     }
 
     fn parse_glyph_data_format(table_data: &[u8]) -> GlyphDataFormat {
-        let value =
-            BigEndian::read_i16(&table_data[OFFSET_GLYPH_DATA_FMT..OFFSET_GLYPH_DATA_FMT + 2]);
+        let value = I16::extract(table_data, OFFSET_GLYPH_DATA_FMT);
         match value {
             0 => GlyphDataFormat::CurrentFormat,
             _ => GlyphDataFormat::Unknown(value),
