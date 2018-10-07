@@ -22,8 +22,8 @@ type Fixed = FixedI32<frac::U16>;
 
 #[derive(Debug)]
 pub struct MaxpTable {
-    version: Version,
-    num_glyphs: u16,
+    pub version: Version,
+    pub num_glyphs: u16,
     max_points: Option<u16>,
     max_contours: Option<u16>,
     max_comp_pts: Option<u16>,
@@ -102,7 +102,7 @@ impl MaxpTable {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Version {
     V0_5,
     V1_0,

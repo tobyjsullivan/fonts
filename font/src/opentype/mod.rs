@@ -1,10 +1,9 @@
 mod tables;
 mod types;
 
-use std::fmt::Debug;
-
 use self::tables::cmap::CmapTable;
 use self::tables::head::HeadTable;
+use self::tables::loca::LocaTable;
 use self::tables::maxp::MaxpTable;
 use self::tables::name::NameTable;
 use super::sfnt::SfntFile;
@@ -14,6 +13,7 @@ pub struct OpenTypeFile<'a> {
     sfnt: SfntFile<'a>,
     cmap: Option<CmapTable>,
     head: Option<HeadTable>,
+    loca: Option<LocaTable>,
     maxp: Option<MaxpTable>,
     name: Option<NameTable<'a>>,
 }
@@ -22,33 +22,83 @@ impl<'a> OpenTypeFile<'a> {
     pub fn deserialize(content: &'a [u8]) -> Self {
         let sfnt = SfntFile::deserialize(content);
 
-        let mut cmap = None;
-        let mut head = None;
-        let mut maxp = None;
-        let mut name = None;
+        let mut cmap_data = None;
+        let mut head_data = None;
+        let mut loca_data = None;
+        let mut maxp_data = None;
+        let mut name_data = None;
+
         for record in &sfnt.tables {
             let table_type = TableType::table_type(record.tag);
             match table_type {
                 TableType::Cmap => {
-                    cmap = Some(Self::deserialize_table(
-                        record.table_data,
-                        &CmapTable::deserialize,
-                    ));
+                    cmap_data = Some(record.table_data);
                 }
                 TableType::Head => {
-                    head = Some(HeadTable::parse(record.table_data));
+                    head_data = Some(record.table_data);
+                }
+                TableType::Loca => {
+                    loca_data = Some(record.table_data);
                 }
                 TableType::Maxp => {
-                    maxp = Some(MaxpTable::parse(record.table_data));
+                    maxp_data = Some(record.table_data);
                 }
                 TableType::Name => {
-                    name = Some(Self::deserialize_table(
-                        record.table_data,
-                        &NameTable::deserialize,
-                    ));
+                    name_data = Some(record.table_data);
                 }
-                TableType::Unknown => {}
                 _ => {}
+            }
+        }
+
+        let mut cmap = None;
+        if let Some(table_data) = cmap_data {
+            match CmapTable::deserialize(table_data) {
+                Ok(parsed) => {
+                    cmap = Some(parsed);
+                }
+                Err(err) => {
+                    panic!("Error deserializing cmap table {:?}", err);
+                }
+            }
+        }
+        let mut head = None;
+        if let Some(table_data) = head_data {
+            head = Some(HeadTable::parse(table_data));
+        }
+        let mut maxp = None;
+        if let Some(table_data) = maxp_data {
+            maxp = Some(MaxpTable::parse(table_data));
+        }
+        let mut loca = None;
+        if let Some(table_data) = loca_data {
+            let (ret_maxp, ret_head) = match (maxp, head) {
+                (Some(maxp_table), Some(head_table)) => {
+                    loca = Some(LocaTable::parse(
+                        table_data,
+                        head_table.index_to_loc_fmt,
+                        maxp_table.num_glyphs,
+                    ));
+                    (Some(maxp_table), Some(head_table))
+                }
+                (None, _) => {
+                    panic!("Cannot deserialize loca table because no maxp table found.");
+                }
+                (_, None) => {
+                    panic!("Cannot deserialize loca table because no head table found.");
+                }
+            };
+            maxp = ret_maxp;
+            head = ret_head;
+        }
+        let mut name = None;
+        if let Some(table_data) = name_data {
+            match NameTable::deserialize(table_data) {
+                Ok(parsed) => {
+                    name = Some(parsed);
+                }
+                Err(err) => {
+                    panic!("Error deserializing cmap table {:?}", err);
+                }
             }
         }
 
@@ -56,18 +106,9 @@ impl<'a> OpenTypeFile<'a> {
             sfnt,
             cmap,
             head,
+            loca,
             maxp,
             name,
-        }
-    }
-
-    fn deserialize_table<T: Debug, E: Debug>(
-        data: &'a [u8],
-        deserialize_fn: &Fn(&'a [u8]) -> Result<T, E>,
-    ) -> T {
-        match deserialize_fn(data) {
-            Ok(table) => table,
-            Err(err) => panic!("Error deserializing name table {:?}", err),
         }
     }
 }
