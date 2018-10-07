@@ -1,4 +1,5 @@
 mod tables;
+mod types;
 
 use std::fmt::Debug;
 
@@ -12,7 +13,7 @@ use super::sfnt::SfntFile;
 pub struct OpenTypeFile<'a> {
     sfnt: SfntFile<'a>,
     cmap: Option<CmapTable>,
-    head: Option<HeadTable<'a>>,
+    head: Option<HeadTable>,
     maxp: Option<MaxpTable>,
     name: Option<NameTable<'a>>,
 }
