@@ -38,7 +38,7 @@ pub struct HeadTable {
     lowest_rec_ppem: u16,
     mac_style: u16,
     font_dir_hint: FontDirectionHint,
-    index_to_loc_fmt: IndexToLocFormat,
+    pub index_to_loc_fmt: IndexToLocFormat,
     glyph_data_fmt: GlyphDataFormat,
 }
 
@@ -106,7 +106,7 @@ pub enum FontDirectionHint {
     Unknown(i16),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum IndexToLocFormat {
     ShortOffset,
     LongOffset,
