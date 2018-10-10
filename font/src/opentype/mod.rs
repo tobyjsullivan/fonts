@@ -13,7 +13,7 @@ pub struct OpenTypeFile<'a> {
     sfnt: SfntFile<'a>,
     cmap: Option<CmapTable>,
     head: Option<HeadTable>,
-    loca: Option<LocaTable>,
+    loca: Option<LocaTable<'a>>,
     maxp: Option<MaxpTable>,
     name: Option<NameTable<'a>>,
 }
