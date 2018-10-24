@@ -1,5 +1,5 @@
-use opentype::types::{DataType, I16};
 use opentype::tables::loca::Location;
+use opentype::types::{DataType, I16};
 
 #[derive(Debug)]
 pub struct GlyfTable<'a> {
@@ -8,9 +8,7 @@ pub struct GlyfTable<'a> {
 
 impl<'a> GlyfTable<'a> {
     pub fn parse(table_data: &'a [u8]) -> Self {
-        Self {
-            table_data,
-        }
+        Self { table_data }
     }
 
     pub fn read_glyph(&self, loca: Location) -> Option<Glyph> {
@@ -18,7 +16,9 @@ impl<'a> GlyfTable<'a> {
             return None;
         }
 
-        Some(Glyph::deserialize(&self.table_data[loca.offset..loca.offset+loca.length]))
+        Some(Glyph::deserialize(
+            &self.table_data[loca.offset..loca.offset + loca.length],
+        ))
     }
 }
 

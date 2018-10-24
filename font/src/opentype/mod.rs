@@ -122,17 +122,7 @@ impl<'a> OpenTypeFile<'a> {
         let glyf = self.glyf.as_ref();
         let location = loca.map(|loca| loca.index(idx));
 
-        match location {
-            Some(loc) => {
-                match glyf {
-                    Some(table) => {
-                        table.read_glyph(loc)
-                    }
-                    None => None,
-                }
-            }
-            None => None,
-        }
+        location.and_then(|loc| glyf.and_then(|table| table.read_glyph(loc)))
     }
 }
 
