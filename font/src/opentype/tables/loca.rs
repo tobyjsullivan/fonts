@@ -19,8 +19,22 @@ impl<'a> LocaTable<'a> {
         }
     }
 
-    pub fn index(&self, idx: usize) -> Offset {
+    pub fn index(&self, idx: usize) -> Location {
         if idx as u16 >= self.num_glyphs {
+            panic!("Index out of range.");
+        }
+
+        let offset = self.value_at(idx);
+        let next = self.value_at(idx + 1);
+
+        Location {
+            offset,
+            length: next - offset,
+        }
+    }
+
+    fn value_at(&self, idx: usize) -> Offset {
+        if idx as u16 > self.num_glyphs {
             panic!("Index out of range.");
         }
 
@@ -34,6 +48,12 @@ impl<'a> LocaTable<'a> {
             }
         }
     }
+}
+
+#[derive(Copy, Clone)]
+pub struct Location {
+    pub(crate) offset: usize,
+    pub(crate) length: usize,
 }
 
 #[cfg(test)]
