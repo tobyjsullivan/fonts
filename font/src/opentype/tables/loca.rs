@@ -7,7 +7,7 @@ use std::ops::Index;
 pub struct LocaTable<'a> {
     table_data: &'a [u8],
     version: IndexToLocFormat,
-    num_glyphs: u16,
+    pub num_glyphs: u16,
 }
 
 impl<'a> LocaTable<'a> {

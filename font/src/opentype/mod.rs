@@ -9,6 +9,8 @@ use self::tables::maxp::MaxpTable;
 use self::tables::name::NameTable;
 use super::sfnt::SfntFile;
 
+pub use self::tables::glyf::Glyph;
+
 #[derive(Debug)]
 pub struct OpenTypeFile<'a> {
     sfnt: SfntFile<'a>,
@@ -108,6 +110,28 @@ impl<'a> OpenTypeFile<'a> {
             loca,
             maxp,
             name,
+        }
+    }
+
+    pub fn num_glyphs(&self) -> Option<u16> {
+        self.loca.as_ref().map(|table| table.num_glyphs)
+    }
+
+    pub fn lookup_glyph(&self, idx: usize) -> Option<Glyph> {
+        let loca = self.loca.as_ref();
+        let glyf = self.glyf.as_ref();
+        let location = loca.map(|loca| loca.index(idx));
+
+        match location {
+            Some(loc) => {
+                match glyf {
+                    Some(table) => {
+                        table.read_glyph(loc)
+                    }
+                    None => None,
+                }
+            }
+            None => None,
         }
     }
 }

@@ -13,11 +13,16 @@ impl<'a> GlyfTable<'a> {
         }
     }
 
-    pub fn read_glyph(&self, loca: Location) -> Glyph {
-        Glyph::deserialize(&self.table_data[loca.offset..loca.offset+loca.length])
+    pub fn read_glyph(&self, loca: Location) -> Option<Glyph> {
+        if loca.length == 0 {
+            return None;
+        }
+
+        Some(Glyph::deserialize(&self.table_data[loca.offset..loca.offset+loca.length]))
     }
 }
 
+#[derive(Debug)]
 pub struct Glyph {
     num_contours: i16,
     min_x: i16,
