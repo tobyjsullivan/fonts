@@ -1,8 +1,6 @@
 use super::head::IndexToLocFormat;
 use opentype::types::{DataType, Offset, Offset16, Offset32};
 
-use std::ops::Index;
-
 #[derive(Debug)]
 pub struct LocaTable<'a> {
     table_data: &'a [u8],
