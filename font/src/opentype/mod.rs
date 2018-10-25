@@ -2,16 +2,20 @@ mod tables;
 mod types;
 
 use self::tables::cmap::CmapTable;
+use self::tables::glyf::GlyfTable;
 use self::tables::head::HeadTable;
 use self::tables::loca::LocaTable;
 use self::tables::maxp::MaxpTable;
 use self::tables::name::NameTable;
 use super::sfnt::SfntFile;
 
+pub use self::tables::glyf::Glyph;
+
 #[derive(Debug)]
 pub struct OpenTypeFile<'a> {
     sfnt: SfntFile<'a>,
     cmap: Option<CmapTable>,
+    glyf: Option<GlyfTable<'a>>,
     head: Option<HeadTable>,
     loca: Option<LocaTable<'a>>,
     maxp: Option<MaxpTable>,
@@ -23,6 +27,7 @@ impl<'a> OpenTypeFile<'a> {
         let sfnt = SfntFile::deserialize(content);
 
         let mut cmap_data = None;
+        let mut glyf_data = None;
         let mut head_data = None;
         let mut loca_data = None;
         let mut maxp_data = None;
@@ -31,21 +36,12 @@ impl<'a> OpenTypeFile<'a> {
         for record in &sfnt.tables {
             let table_type = TableType::table_type(record.tag);
             match table_type {
-                TableType::Cmap => {
-                    cmap_data = Some(record.table_data);
-                }
-                TableType::Head => {
-                    head_data = Some(record.table_data);
-                }
-                TableType::Loca => {
-                    loca_data = Some(record.table_data);
-                }
-                TableType::Maxp => {
-                    maxp_data = Some(record.table_data);
-                }
-                TableType::Name => {
-                    name_data = Some(record.table_data);
-                }
+                TableType::Cmap => cmap_data = Some(record.table_data),
+                TableType::Glyf => glyf_data = Some(record.table_data),
+                TableType::Head => head_data = Some(record.table_data),
+                TableType::Loca => loca_data = Some(record.table_data),
+                TableType::Maxp => maxp_data = Some(record.table_data),
+                TableType::Name => name_data = Some(record.table_data),
                 _ => {}
             }
         }
@@ -60,6 +56,10 @@ impl<'a> OpenTypeFile<'a> {
                     panic!("Error deserializing cmap table {:?}", err);
                 }
             }
+        }
+        let mut glyf = None;
+        if let Some(table_data) = glyf_data {
+            glyf = Some(GlyfTable::parse(table_data));
         }
         let mut head = None;
         if let Some(table_data) = head_data {
@@ -105,11 +105,24 @@ impl<'a> OpenTypeFile<'a> {
         Self {
             sfnt,
             cmap,
+            glyf,
             head,
             loca,
             maxp,
             name,
         }
+    }
+
+    pub fn num_glyphs(&self) -> Option<u16> {
+        self.loca.as_ref().map(|table| table.num_glyphs)
+    }
+
+    pub fn lookup_glyph(&self, idx: usize) -> Option<Glyph> {
+        let loca = self.loca.as_ref();
+        let glyf = self.glyf.as_ref();
+        let location = loca.map(|loca| loca.index(idx));
+
+        location.and_then(|loc| glyf.and_then(|table| table.read_glyph(loc)))
     }
 }
 

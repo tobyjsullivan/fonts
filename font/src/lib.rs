@@ -110,6 +110,22 @@ impl<'a> Font<'a> {
             None => Err(FontParseErr::UnrecognizedFormatError),
         }
     }
+
+    pub fn dump_glyphs(&self) {
+        match &self.font {
+            ParsedFont::OpenType(font) => {
+                let glyph_count = font.num_glyphs();
+                glyph_count.map(|n| {
+                    println!("Num glyphs: {}", n);
+                    for idx in 0..n {
+                        let glyph = font.lookup_glyph(idx as usize);
+                        println!("DUMP: {} {:?}", idx, glyph);
+                    }
+                });
+            }
+            _ => panic!("Dump not implemented."),
+        }
+    }
 }
 
 #[cfg(test)]

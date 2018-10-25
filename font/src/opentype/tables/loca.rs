@@ -1,13 +1,11 @@
 use super::head::IndexToLocFormat;
 use opentype::types::{DataType, Offset, Offset16, Offset32};
 
-use std::ops::Index;
-
 #[derive(Debug)]
 pub struct LocaTable<'a> {
     table_data: &'a [u8],
     version: IndexToLocFormat,
-    num_glyphs: u16,
+    pub num_glyphs: u16,
 }
 
 impl<'a> LocaTable<'a> {
@@ -19,8 +17,22 @@ impl<'a> LocaTable<'a> {
         }
     }
 
-    pub fn index(&self, idx: usize) -> Offset {
+    pub fn index(&self, idx: usize) -> Location {
         if idx as u16 >= self.num_glyphs {
+            panic!("Index out of range.");
+        }
+
+        let offset = self.value_at(idx);
+        let next = self.value_at(idx + 1);
+
+        Location {
+            offset,
+            length: next - offset,
+        }
+    }
+
+    fn value_at(&self, idx: usize) -> Offset {
+        if idx as u16 > self.num_glyphs {
             panic!("Index out of range.");
         }
 
@@ -36,6 +48,12 @@ impl<'a> LocaTable<'a> {
     }
 }
 
+#[derive(PartialEq, Copy, Clone, Debug)]
+pub struct Location {
+    pub(crate) offset: usize,
+    pub(crate) length: usize,
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -49,18 +67,30 @@ mod test {
             num_glyphs: 4,
         };
 
-        assert_eq!(table.index(1), 128usize);
+        assert_eq!(
+            table.index(1),
+            Location {
+                offset: 128usize,
+                length: 200
+            }
+        );
     }
 
     #[test]
     fn index_long() {
-        const EXAMPLE_TABLE_DATA: [u8; 8] = [0u8, 0, 0, 0, 0, 0, 0, 248];
+        const EXAMPLE_TABLE_DATA: [u8; 12] = [0u8, 0, 0, 0, 0, 0, 0, 248, 0, 0, 1, 37];
         let table = LocaTable {
             table_data: &EXAMPLE_TABLE_DATA,
             version: IndexToLocFormat::LongOffset,
             num_glyphs: 4,
         };
 
-        assert_eq!(table.index(1), 248usize);
+        assert_eq!(
+            table.index(1),
+            Location {
+                offset: 248usize,
+                length: 45
+            }
+        );
     }
 }
