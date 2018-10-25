@@ -50,7 +50,7 @@ impl<'a> LocaTable<'a> {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub struct Location {
     pub(crate) offset: usize,
     pub(crate) length: usize,
@@ -69,18 +69,30 @@ mod test {
             num_glyphs: 4,
         };
 
-        assert_eq!(table.index(1), 128usize);
+        assert_eq!(
+            table.index(1),
+            Location {
+                offset: 128usize,
+                length: 200
+            }
+        );
     }
 
     #[test]
     fn index_long() {
-        const EXAMPLE_TABLE_DATA: [u8; 8] = [0u8, 0, 0, 0, 0, 0, 0, 248];
+        const EXAMPLE_TABLE_DATA: [u8; 12] = [0u8, 0, 0, 0, 0, 0, 0, 248, 0, 0, 1, 37];
         let table = LocaTable {
             table_data: &EXAMPLE_TABLE_DATA,
             version: IndexToLocFormat::LongOffset,
             num_glyphs: 4,
         };
 
-        assert_eq!(table.index(1), 248usize);
+        assert_eq!(
+            table.index(1),
+            Location {
+                offset: 248usize,
+                length: 45
+            }
+        );
     }
 }
