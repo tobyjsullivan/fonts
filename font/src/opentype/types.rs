@@ -5,6 +5,14 @@ pub trait DataType<T> {
     fn extract(data: &[u8], offset: usize) -> T;
 }
 
+pub enum U8 {}
+
+impl DataType<u8> for U8 {
+    fn extract(data: &[u8], offset: usize) -> u8 {
+        data[offset]
+    }
+}
+
 pub enum U16 {}
 
 impl DataType<u16> for U16 {
