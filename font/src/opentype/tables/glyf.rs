@@ -128,14 +128,14 @@ impl<'a> SimpleGlyphTable<'a> {
             *cursor += 1;
 
             let repetitions = if flag & Self::MASK_REPEAT_FLAG == 0 {
-                1
+                0
             } else {
-                let r = U8::extract(table_data, *cursor) + 1;
+                let r = U8::extract(table_data, *cursor);
                 *cursor += 1;
                 r
             };
 
-            for _ in 0..repetitions {
+            for _ in 0..repetitions + 1 {
                 flags.push(flag);
                 flag_idx += 1;
             }
