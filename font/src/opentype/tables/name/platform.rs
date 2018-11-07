@@ -1,6 +1,6 @@
 /// See: https://docs.microsoft.com/en-us/typography/opentype/spec/name#platform-ids
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Platform {
     Unicode,
     Macintosh,

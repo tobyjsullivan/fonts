@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum UnicodeEncoding {
     Unicode1,         // Deprecated, Unicode 1.0
     Unicode11,        // Deprecated, Unicode 1.1
