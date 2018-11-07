@@ -3,10 +3,10 @@ extern crate fixed;
 
 mod filetype;
 mod font;
-mod name;
 mod opentype;
 pub mod sfnt;
 mod truetype;
 
 pub use font::{Font, FontParseErr};
-pub use name::Name;
+// TODO: Have a generic version of Name which maps to format-specific formats as needed.
+pub use opentype::tables::name::Name;
