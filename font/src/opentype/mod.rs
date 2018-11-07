@@ -1,4 +1,4 @@
-mod tables;
+pub mod tables;
 mod types;
 
 use self::tables::cmap::CmapTable;
@@ -19,7 +19,7 @@ pub struct OpenTypeFile<'a> {
     head: Option<HeadTable>,
     loca: Option<LocaTable<'a>>,
     maxp: Option<MaxpTable>,
-    name: Option<NameTable<'a>>,
+    pub name: Option<NameTable<'a>>,
 }
 
 impl<'a> OpenTypeFile<'a> {
