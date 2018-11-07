@@ -61,6 +61,23 @@ impl<'a> NameTable<'a> {
         result
     }
 
+    pub fn find_strings(&self, name: Name) -> Vec<(Platform, Encoding, &[u8])> {
+        let mut result = vec![];
+
+        for record in &self.name_records {
+            if record.name == Some(name) {
+                result.push((
+                    record.platform,
+                    record.encoding,
+                    &self.string_storage
+                        [record.string_offset..record.string_offset + record.string_length],
+                ));
+            }
+        }
+
+        result
+    }
+
     fn parse_string_storage<'b>(table_data: &'b [u8], offset: usize) -> &'b [u8] {
         let storage_length = table_data.len() - offset as usize;
         &table_data[offset..offset + storage_length]

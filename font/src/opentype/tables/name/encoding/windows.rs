@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum WindowsEncoding {
     Symbol,
     UnicodeBMP, // UCS-2

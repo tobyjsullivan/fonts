@@ -9,7 +9,7 @@ pub use self::unicode::UnicodeEncoding;
 pub use self::windows::WindowsEncoding;
 pub use super::platform::Platform;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Encoding {
     Unicode { encoding: UnicodeEncoding },
     Macintosh { encoding: MacintoshEncoding },

@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ISOEncoding {
     Ascii,     // 7-bit ASCII
     Iso10646,  // ISO 10646

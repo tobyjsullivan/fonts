@@ -1,4 +1,5 @@
 use filetype::FileType;
+use name;
 use opentype;
 use truetype;
 
@@ -51,27 +52,34 @@ impl<'a> Font<'a> {
         }
     }
 
-    pub fn read_copyright(&self) -> Option<String> {
-        self.read_unicode_string(opentype::tables::name::Name::CopyrightNotice)
-    }
-
-    fn read_unicode_string(&self, field: opentype::tables::name::Name) -> Option<String> {
-        use opentype::tables::name;
+    pub fn read_unicode_string(&self, field: name::Name) -> Option<String> {
         match &self.font {
-            ParsedFont::OpenType(ot_font) => ot_font
-                .name
-                .as_ref()
-                .and_then(|name_table| {
-                    name_table.read_string_value(
-                        name::Platform::Unicode,
-                        name::Encoding::Unicode {
-                            encoding: name::UnicodeEncoding::Unicode1,
-                        },
-                        field,
-                    )
-                }).map(|bytes| String::from_utf8_lossy(bytes).into_owned()),
+            ParsedFont::OpenType(ot_font) => field
+                .into_opentype()
+                .and_then(|ot_field| Self::read_opentype_string(ot_font, ot_field)),
             _ => None,
         }
+    }
+
+    fn read_opentype_string(
+        ot_font: &opentype::OpenTypeFile,
+        field: opentype::tables::name::Name,
+    ) -> Option<String> {
+        use opentype::tables::name;
+        ot_font
+            .name
+            .as_ref()
+            .and_then(|name_table| {
+                name_table
+                    .find_strings(field)
+                    .iter()
+                    .find(|el| match el {
+                        (name::Platform::Unicode, name::Encoding::Unicode { encoding: _ }, _) => {
+                            true
+                        }
+                        _ => false,
+                    }).map(|el| el.2)
+            }).map(|bytes| String::from_utf8_lossy(bytes).into_owned())
     }
 }
 
