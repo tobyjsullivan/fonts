@@ -1,7 +1,7 @@
 use filetype::FileType;
-use name;
 use opentype;
 use truetype;
+use Name;
 
 #[derive(Debug)]
 enum ParsedFont<'a> {
@@ -52,11 +52,9 @@ impl<'a> Font<'a> {
         }
     }
 
-    pub fn read_unicode_string(&self, field: name::Name) -> Option<String> {
+    pub fn read_unicode_string(&self, field: Name) -> Option<String> {
         match &self.font {
-            ParsedFont::OpenType(ot_font) => field
-                .into_opentype()
-                .and_then(|ot_field| Self::read_opentype_string(ot_font, ot_field)),
+            ParsedFont::OpenType(ot_font) => Self::read_opentype_string(ot_font, field),
             _ => None,
         }
     }
