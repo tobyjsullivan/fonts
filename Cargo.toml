@@ -4,7 +4,11 @@ version = "0.1.0"
 authors = ["Toby Sullivan <toby.s@canva.com>"]
 
 [workspace]
-members = ["font"]
+members = ["font", "about"]
 
 [dependencies]
 font = { path = "./font" }
+
+[[bin]]
+name = "about"
+path = "about/src/main.rs"
