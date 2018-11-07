@@ -21,7 +21,9 @@ fn main() {
 
     match Font::from(&data) {
         Ok(parsed) => {
-            print_entry(&parsed, Name::FontFamilyName, "Font Family Name");
+            print_entry(&parsed, Name::FontFamilyName, "Family Name");
+            print_entry(&parsed, Name::FontSubfamilyName, "Subfamily Name");
+            print_entry(&parsed, Name::VersionString, "Version");
             print_entry(&parsed, Name::CopyrightNotice, "Copyright Notice");
         }
         Err(error) => {

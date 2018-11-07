@@ -3,6 +3,8 @@ use opentype;
 pub enum Name {
     CopyrightNotice,
     FontFamilyName,
+    VersionString,
+    FontSubfamilyName,
 }
 
 impl Name {
@@ -10,7 +12,8 @@ impl Name {
         match self {
             Name::CopyrightNotice => Some(opentype::tables::name::Name::CopyrightNotice),
             Name::FontFamilyName => Some(opentype::tables::name::Name::FontFamilyName),
-            _ => None,
+            Name::FontSubfamilyName => Some(opentype::tables::name::Name::FontSubfamilyName),
+            Name::VersionString => Some(opentype::tables::name::Name::VersionString),
         }
     }
 }
