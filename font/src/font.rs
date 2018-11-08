@@ -17,7 +17,7 @@ pub struct Font<'a> {
 }
 
 impl<'a> Font<'a> {
-    pub fn from(content: &'a Vec<u8>) -> Result<Self, FontParseErr> {
+    pub fn from_bytes(content: &'a [u8]) -> Result<Self, FontParseErr> {
         match FileType::detect(content) {
             Some(file_type) => {
                 let font = match file_type {

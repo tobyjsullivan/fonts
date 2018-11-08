@@ -24,12 +24,12 @@ impl FileType {
     const EOT_HEADER_OFFSET: usize = 8;
     const EOT_HEADER_LENGTH: usize = 4;
 
-    pub(crate) fn detect(content: &Vec<u8>) -> Option<Self> {
+    pub(crate) fn detect(content: &[u8]) -> Option<Self> {
         let sfnt_result = Self::detect_sfnt(content);
         sfnt_result.or_else(|| Self::detect_eot(content))
     }
 
-    fn detect_sfnt(content: &Vec<u8>) -> Option<Self> {
+    fn detect_sfnt(content: &[u8]) -> Option<Self> {
         let sfnt_header =
             &content[Self::SFNT_HEADER_OFFSET..Self::SFNT_HEADER_OFFSET + Self::SFNT_HEADER_LENGTH];
         match sfnt_header {
@@ -51,7 +51,7 @@ impl FileType {
         }
     }
 
-    fn detect_eot(content: &Vec<u8>) -> Option<Self> {
+    fn detect_eot(content: &[u8]) -> Option<Self> {
         let eot_header =
             &content[Self::EOT_HEADER_OFFSET..Self::EOT_HEADER_OFFSET + Self::EOT_HEADER_LENGTH];
         match eot_header {

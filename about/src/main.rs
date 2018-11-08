@@ -19,7 +19,7 @@ fn main() {
     let mut data: Vec<u8> = vec![];
     f.read_to_end(&mut data).unwrap();
 
-    match Font::from(&data) {
+    match Font::from_bytes(&data) {
         Ok(parsed) => {
             print_entry(&parsed, Name::UniqueFontID, "Unique ID");
             print_entry(&parsed, Name::FullFontName, "Full Name");
