@@ -77,7 +77,7 @@ impl<'a> Font<'a> {
                         }
                         _ => false,
                     }).map(|el| el.2)
-            }).map(|bytes| String::from_utf8_lossy(bytes).into_owned())
+            }).and_then(|bytes| String::from_utf8(bytes.to_vec()).ok())
     }
 }
 
