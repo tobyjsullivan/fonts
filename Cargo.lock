@@ -24,6 +24,7 @@ version = "0.1.0"
 dependencies = [
  "byteorder 1.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "fixed 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strings 0.1.0",
 ]
 
 [[package]]
@@ -32,6 +33,10 @@ version = "0.1.0"
 dependencies = [
  "font 0.1.0",
 ]
+
+[[package]]
+name = "strings"
+version = "0.1.0"
 
 [[package]]
 name = "typenum"

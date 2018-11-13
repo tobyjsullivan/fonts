@@ -1,5 +1,6 @@
 use filetype::FileType;
 use opentype;
+use strings;
 use truetype;
 use Name;
 
@@ -63,22 +64,45 @@ impl<'a> Font<'a> {
         ot_font: &opentype::OpenTypeFile,
         field: opentype::tables::name::Name,
     ) -> Option<String> {
-        use opentype::tables::name;
-        ot_font
-            .name
-            .as_ref()
-            .and_then(|name_table| {
-                name_table
-                    .find_strings(field)
-                    .iter()
-                    .find(|el| match el {
-                        (name::Platform::Unicode, name::Encoding::Unicode { encoding: _ }, _) => {
-                            true
-                        }
-                        _ => false,
-                    }).map(|el| el.2)
-            }).and_then(|bytes| String::from_utf8(bytes.to_vec()).ok())
+        ot_font.name.as_ref().and_then(|name_table| {
+            name_table
+                .find_strings(field)
+                .iter()
+                .map(|el| parse_string(el.0, el.1, el.2))
+                .find(|o_str| o_str.is_some())
+                .and_then(|o_str| o_str)
+        })
     }
+}
+
+fn parse_string(
+    platform: opentype::tables::name::Platform,
+    encoding: opentype::tables::name::Encoding,
+    bytes: &[u8],
+) -> Option<String> {
+    match (platform, encoding) {
+        (opentype::tables::name::Platform::Unicode, _) => {
+            Some(to_string(strings::Utf8::from_bytes(bytes)))
+        }
+        (
+            opentype::tables::name::Platform::Macintosh,
+            opentype::tables::name::Encoding::Macintosh { encoding },
+        ) => match encoding {
+            opentype::tables::name::MacintoshEncoding::Roman => {
+                Some(to_string(to_utf8(strings::AppleRoman::from_bytes(bytes))))
+            }
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn to_utf8<T: Into<strings::Utf8>>(string: T) -> strings::Utf8 {
+    string.into()
+}
+
+fn to_string(utf8: strings::Utf8) -> String {
+    String::from_utf8(utf8.to_bytes().to_vec()).unwrap()
 }
 
 #[derive(Debug)]
