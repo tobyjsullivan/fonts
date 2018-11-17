@@ -1,3 +1,5 @@
+/// UCS-2 is the simplest encoding form of the Universal Coded Character Set defined by ISO 10646.
+/// All characters are represented as exactly two bytes.
 use apple::roman::{map_to_ucs2, AppleRoman};
 
 pub struct Ucs2 {
