@@ -80,15 +80,17 @@ fn parse_string(
     encoding: opentype::tables::name::Encoding,
     bytes: &[u8],
 ) -> Option<String> {
+    use opentype::tables::name;
     match (platform, encoding) {
-        (opentype::tables::name::Platform::Unicode, _) => {
-            Some(to_string(strings::Utf8::from_bytes(bytes)))
-        }
-        (
-            opentype::tables::name::Platform::Macintosh,
-            opentype::tables::name::Encoding::Macintosh { encoding },
-        ) => match encoding {
-            opentype::tables::name::MacintoshEncoding::Roman => {
+        (name::Platform::Unicode, name::Encoding::Unicode { encoding }) => match encoding {
+            name::UnicodeEncoding::Unicode1 => {
+                Some(to_string(to_utf8(strings::Ucs2::from_bytes(bytes))))
+            }
+            // TODO: Figure out when UTF-8 isn't appropriate.
+            _ => Some(to_string(strings::Utf8::from_bytes(bytes))),
+        },
+        (name::Platform::Macintosh, name::Encoding::Macintosh { encoding }) => match encoding {
+            name::MacintoshEncoding::Roman => {
                 Some(to_string(to_utf8(strings::AppleRoman::from_bytes(bytes))))
             }
             _ => None,
