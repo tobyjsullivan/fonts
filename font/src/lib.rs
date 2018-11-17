@@ -1,5 +1,6 @@
 extern crate byteorder;
 extern crate fixed;
+extern crate strings;
 
 mod filetype;
 mod font;
