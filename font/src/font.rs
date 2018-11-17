@@ -69,6 +69,8 @@ impl<'a> Font<'a> {
                 .find_strings(field)
                 .iter()
                 .map(|el| parse_string(el.0, el.1))
+                // Filter out empty strings.
+                .filter(|o_str| o_str.as_ref().filter(|s| *s != "").is_some())
                 .find(|o_str| o_str.is_some())
                 .and_then(|o_str| o_str)
         })
@@ -78,7 +80,7 @@ impl<'a> Font<'a> {
 fn parse_string(encoding: opentype::tables::name::Encoding, bytes: &[u8]) -> Option<String> {
     use opentype::tables::name::Encoding;
     match encoding {
-        Encoding::Unicode1 | Encoding::Unicode2BMP => {
+        Encoding::Unicode1 | Encoding::Unicode2BMP | Encoding::WindowsUnicodeBMP => {
             Some(to_string(to_utf8(strings::Ucs2::from_bytes(bytes))))
         }
         Encoding::UnicodeFull => Some(to_string(strings::Utf8::from_bytes(bytes))),
