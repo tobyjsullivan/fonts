@@ -61,13 +61,12 @@ impl<'a> NameTable<'a> {
         result
     }
 
-    pub fn find_strings(&self, name: Name) -> Vec<(Platform, Encoding, &[u8])> {
+    pub fn find_strings(&self, name: Name) -> Vec<(Encoding, &[u8])> {
         let mut result = vec![];
 
         for record in &self.name_records {
             if record.name == Some(name) {
                 result.push((
-                    record.platform,
                     record.encoding,
                     &self.string_storage
                         [record.string_offset..record.string_offset + record.string_length],
@@ -116,7 +115,6 @@ pub enum Format {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use opentype::tables::name::encoding;
 
     const SAMPLE_TABLE: [u8; 32] = [
         0u8, 0, 0, 1, 0, 18, 0, 0, 0, 0, 0, 0, 0, 1, 0, 14, 0, 0, 0, 82, 0, 101, 0, 103, 0, 117, 0,
@@ -126,13 +124,8 @@ mod tests {
     #[test]
     fn read_string_value() {
         let table = NameTable::deserialize(&SAMPLE_TABLE).unwrap();
-        let result = table.read_string_value(
-            Platform::Unicode,
-            Encoding::Unicode {
-                encoding: encoding::UnicodeEncoding::Unicode1,
-            },
-            Name::FontFamilyName,
-        );
+        let result =
+            table.read_string_value(Platform::Unicode, Encoding::Unicode1, Name::FontFamilyName);
 
         const EXPECTED: [u8; 14] = [0u8, 82, 0, 101, 0, 103, 0, 117, 0, 108, 0, 97, 0, 114];
         assert_eq!(result, Some(&EXPECTED[..]));
