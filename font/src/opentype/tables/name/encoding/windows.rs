@@ -1,27 +1,15 @@
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum WindowsEncoding {
-    Symbol,
-    UnicodeBMP, // UCS-2
-    ShiftJIS,
-    PRC,
-    Big5,
-    Wansung,
-    Johab,
-    UnicodeUCS4,
-}
+use opentype::tables::name::Encoding;
 
-impl WindowsEncoding {
-    pub fn lookup(encoding_id: u16) -> Option<WindowsEncoding> {
-        match encoding_id {
-            0 => Some(WindowsEncoding::Symbol),
-            1 => Some(WindowsEncoding::UnicodeBMP),
-            2 => Some(WindowsEncoding::ShiftJIS),
-            3 => Some(WindowsEncoding::PRC),
-            4 => Some(WindowsEncoding::Big5),
-            5 => Some(WindowsEncoding::Wansung),
-            6 => Some(WindowsEncoding::Johab),
-            10 => Some(WindowsEncoding::UnicodeUCS4),
-            _ => None,
-        }
+pub fn lookup(encoding_id: u16) -> Option<Encoding> {
+    match encoding_id {
+        0 => Some(Encoding::WindowsSymbol),
+        1 => Some(Encoding::WindowsUnicodeBMP),
+        2 => Some(Encoding::WindowsShiftJIS),
+        3 => Some(Encoding::WindowsPRC),
+        4 => Some(Encoding::WindowsBig5),
+        5 => Some(Encoding::WindowsWansung),
+        6 => Some(Encoding::WindowsJohab),
+        10 => Some(Encoding::WindowsUnicodeUCS4),
+        _ => None,
     }
 }

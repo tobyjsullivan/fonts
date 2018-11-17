@@ -87,7 +87,7 @@ pub enum ParseError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use opentype::tables::name::encoding::MacintoshEncoding;
+    use opentype::tables::name::encoding::Encoding;
 
     const SAMPLE_NAME_RECORD: [u8; 12] = [0u8, 1, 0, 0, 0, 0, 0, 0, 0, 47, 0, 0];
 
@@ -97,12 +97,7 @@ mod tests {
         let record = result.unwrap();
 
         assert_eq!(record.platform, Platform::Macintosh);
-        assert_eq!(
-            record.encoding,
-            Encoding::Macintosh {
-                encoding: MacintoshEncoding::Roman
-            }
-        );
+        assert_eq!(record.encoding, Encoding::MacintoshRoman,);
         assert_eq!(record.language_id, 0u16);
         assert_eq!(record.name_id, 0);
         assert_eq!(record.name, Some(Name::CopyrightNotice));

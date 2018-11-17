@@ -68,33 +68,23 @@ impl<'a> Font<'a> {
             name_table
                 .find_strings(field)
                 .iter()
-                .map(|el| parse_string(el.0, el.1, el.2))
+                .map(|el| parse_string(el.0, el.1))
                 .find(|o_str| o_str.is_some())
                 .and_then(|o_str| o_str)
         })
     }
 }
 
-fn parse_string(
-    platform: opentype::tables::name::Platform,
-    encoding: opentype::tables::name::Encoding,
-    bytes: &[u8],
-) -> Option<String> {
-    use opentype::tables::name;
-    match (platform, encoding) {
-        (name::Platform::Unicode, name::Encoding::Unicode { encoding }) => match encoding {
-            name::UnicodeEncoding::Unicode1 => {
-                Some(to_string(to_utf8(strings::Ucs2::from_bytes(bytes))))
-            }
-            // TODO: Figure out when UTF-8 isn't appropriate.
-            _ => Some(to_string(strings::Utf8::from_bytes(bytes))),
-        },
-        (name::Platform::Macintosh, name::Encoding::Macintosh { encoding }) => match encoding {
-            name::MacintoshEncoding::Roman => {
-                Some(to_string(to_utf8(strings::AppleRoman::from_bytes(bytes))))
-            }
-            _ => None,
-        },
+fn parse_string(encoding: opentype::tables::name::Encoding, bytes: &[u8]) -> Option<String> {
+    use opentype::tables::name::Encoding;
+    match encoding {
+        Encoding::Unicode1 | Encoding::Unicode2BMP => {
+            Some(to_string(to_utf8(strings::Ucs2::from_bytes(bytes))))
+        }
+        Encoding::UnicodeFull => Some(to_string(strings::Utf8::from_bytes(bytes))),
+        Encoding::MacintoshRoman => {
+            Some(to_string(to_utf8(strings::AppleRoman::from_bytes(bytes))))
+        }
         _ => None,
     }
 }
