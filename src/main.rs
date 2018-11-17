@@ -20,7 +20,7 @@ fn main() {
 
     println!("Finished reading {} bytes.", data.len());
 
-    match Font::from(&data) {
+    match Font::from_bytes(&data) {
         Ok(parsed) => {
             println!("Parsed: {:?}", parsed);
             parsed.dump_glyphs();
