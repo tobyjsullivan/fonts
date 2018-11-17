@@ -85,7 +85,10 @@ fn parse_string(encoding: opentype::tables::name::Encoding, bytes: &[u8]) -> Opt
         }
         Encoding::UnicodeFull => Some(to_string(strings::Utf8::from_bytes(bytes))),
         Encoding::MacintoshRoman => {
-            Some(to_string(to_utf8(strings::AppleRoman::from_bytes(bytes))))
+            let mac_str = to_string(to_utf8(strings::AppleRoman::from_bytes(bytes)));
+            // Convert Apple line endings (\r) to unix (\n).
+            let unix_str = mac_str.replace("\r", "\n");
+            Some(unix_str)
         }
         _ => None,
     }
