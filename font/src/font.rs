@@ -53,6 +53,28 @@ impl<'a> Font<'a> {
         }
     }
 
+    pub fn available_strings(&self) -> Vec<(Name, String)> {
+        match &self.font {
+            ParsedFont::OpenType(ot_font) => {
+                let mut strings = ot_font
+                    .name
+                    .as_ref()
+                    .map(|name| {
+                        name.available_strings()
+                            .iter()
+                            .map(|(name, enc, bytes)| (name, parse_string(*enc, bytes)))
+                            .filter(|(_, o_str)| o_str.is_some())
+                            .map(|(n, o_str)| (*n, o_str.unwrap()))
+                            .collect()
+                    }).unwrap_or(Vec::new());
+                strings.sort_unstable();
+                strings.dedup();
+                strings
+            }
+            _ => Vec::new(),
+        }
+    }
+
     pub fn read_unicode_string(&self, field: Name) -> Option<String> {
         match &self.font {
             ParsedFont::OpenType(ot_font) => Self::read_opentype_string(ot_font, field),

@@ -1,7 +1,7 @@
 /// Pre-defined metadata fields which apply to all fonts regardless of platform.
 /// Not all valid name IDs necessarily correspond to a defined field.
 /// Find details for all of these in the MS docs: https://docs.microsoft.com/en-us/typography/opentype/spec/name#name-ids
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum Name {
     CopyrightNotice,
     FontFamilyName,
