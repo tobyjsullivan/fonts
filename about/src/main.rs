@@ -26,7 +26,11 @@ fn main() {
                 if value == "" {
                     continue;
                 }
-                println!("{:<25} {}", field_label(f).unwrap_or(&format!("{:?}", f)), value);
+                println!(
+                    "{:<25} {}",
+                    field_label(f).unwrap_or(&format!("{:?}", f)),
+                    value
+                );
             }
         }
         Err(error) => {
