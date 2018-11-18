@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use super::encoding::Encoding;
 use super::name::Name;
 use super::platform::Platform;
@@ -59,6 +61,22 @@ impl<'a> NameTable<'a> {
             }
         }
         result
+    }
+
+    pub fn available_strings(&self) -> Vec<(Name, Encoding, &[u8])> {
+        let mut names = vec![];
+
+        for record in &self.name_records {
+            if let Some(name) = record.name {
+                names.push((
+                    name,
+                    record.encoding,
+                    &self.string_storage
+                        [record.string_offset..record.string_offset + record.string_length],
+                ));
+            }
+        }
+        names
     }
 
     pub fn find_strings(&self, name: Name) -> Vec<(Encoding, &[u8])> {

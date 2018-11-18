@@ -21,55 +21,13 @@ fn main() {
 
     match Font::from_bytes(&data) {
         Ok(parsed) => {
-            print_entry(&parsed, Name::UniqueFontID, "Unique ID");
-            print_entry(&parsed, Name::FullFontName, "Full Name");
-            print_entry(&parsed, Name::FontFamilyName, "Family Name");
-            print_entry(&parsed, Name::FontSubfamilyName, "Subfamily Name");
-            print_entry(&parsed, Name::CompatibleFullName, "Compatible Full Name");
-            print_entry(&parsed, Name::PostScriptName, "PostScript Name");
-            print_entry(
-                &parsed,
-                Name::PostScriptCIDFindFontName,
-                "PostScript CID Find Font Name",
-            );
-            print_entry(
-                &parsed,
-                Name::VariationsPostScriptNamePrefix,
-                "Variations PostScript Name Prefix",
-            );
-            print_entry(
-                &parsed,
-                Name::TypographicFamilyName,
-                "Typographic Family Name",
-            );
-            print_entry(
-                &parsed,
-                Name::TypographicSubfamilyName,
-                "Typographic Subfamily Name",
-            );
-            print_entry(&parsed, Name::WWSFamilyName, "WWS Family Name");
-            print_entry(&parsed, Name::WWSSubfamilyName, "WWS Subfamily Name");
-            print_entry(&parsed, Name::VersionString, "Version");
-            print_entry(&parsed, Name::CopyrightNotice, "Copyright Notice");
-            print_entry(&parsed, Name::Trademark, "Trademark");
-            print_entry(&parsed, Name::Manufacturer, "Manufacturer");
-            print_entry(&parsed, Name::Designer, "Designer");
-            print_entry(&parsed, Name::DesignerUrl, "Designer Url");
-            print_entry(&parsed, Name::Description, "Description");
-            print_entry(&parsed, Name::VendorUrl, "Vendor Url");
-            print_entry(&parsed, Name::License, "License");
-            print_entry(&parsed, Name::LicenseInfoUrl, "License Info Url");
-            print_entry(&parsed, Name::SampleText, "Sample Text");
-            print_entry(
-                &parsed,
-                Name::LightBackgroundPalette,
-                "Light Background Palette",
-            );
-            print_entry(
-                &parsed,
-                Name::DarkBackgroundPalette,
-                "Dark Background Palette",
-            );
+            let fields = parsed.available_strings();
+            for (f, value) in fields {
+                if value == "" {
+                    continue;
+                }
+                println!("{:<25} {}", field_label(f).unwrap_or(&format!("{:?}", f)), value);
+            }
         }
         Err(error) => {
             println!("Failed to parse: {:?}", error);
@@ -77,8 +35,32 @@ fn main() {
     }
 }
 
-fn print_entry(font: &Font, field: Name, label: &str) {
-    font.read_unicode_string(field).map(|copyright| {
-        println!("{:<25} {}", label, copyright);
-    });
+fn field_label(field: Name) -> Option<&'static str> {
+    match field {
+        Name::CopyrightNotice => Some("Copyright Notice"),
+        Name::FontFamilyName => Some("Family Name"),
+        Name::FontSubfamilyName => Some("Subfamily Name"),
+        Name::UniqueFontID => Some("Unique ID"),
+        Name::FullFontName => Some("Full Name"),
+        Name::VersionString => Some("Version"),
+        Name::PostScriptName => Some("PostScript Name"),
+        Name::Trademark => Some("Trademark"),
+        Name::Manufacturer => Some("Manufacturer"),
+        Name::Designer => Some("Designer"),
+        Name::Description => Some("Description"),
+        Name::VendorUrl => Some("Vendor Url"),
+        Name::DesignerUrl => Some("Designer Url"),
+        Name::License => Some("License"),
+        Name::LicenseInfoUrl => Some("License Info Url"),
+        Name::TypographicFamilyName => Some("Typographic Family Name"),
+        Name::TypographicSubfamilyName => Some("Typographic Subfamily Name"),
+        Name::CompatibleFullName => Some("Compatible Full Name"),
+        Name::SampleText => Some("Sample Text"),
+        Name::PostScriptCIDFindFontName => Some("PostScript CID Find Font Name"),
+        Name::WWSFamilyName => Some("WWS Family Name"),
+        Name::WWSSubfamilyName => Some("WWS Subfamily Name"),
+        Name::LightBackgroundPalette => Some("Light Background Palette"),
+        Name::DarkBackgroundPalette => Some("Dark Background Palette"),
+        Name::VariationsPostScriptNamePrefix => Some("Variations PostScript Name Prefix"),
+    }
 }
