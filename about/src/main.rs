@@ -1,20 +1,20 @@
+#[macro_use]
+extern crate clap;
 extern crate font;
 
-use std::env;
 use std::fs::File;
 use std::io::Read;
-use std::process;
 
 use font::{Font, Name};
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 2 {
-        println!("ERROR: You must supply a font file.");
-        process::exit(1);
-    }
+    let matches = clap_app!(myapp =>
+        (about: "Dumps strings stored in font files.")
+        (@arg COPYRIGHT: -c --copyright "Print Copyright string")
+        (@arg INPUT: +required "Sets the input file to use")
+    ).get_matches();
 
-    let filename = &args[1];
+    let filename = matches.value_of("INPUT").unwrap();
     let mut f = File::open(filename).expect("file not found.");
     let mut data: Vec<u8> = vec![];
     f.read_to_end(&mut data).unwrap();
