@@ -101,6 +101,7 @@ impl<'a> Font<'a> {
 
 fn parse_string(encoding: opentype::tables::name::Encoding, bytes: &[u8]) -> Option<String> {
     use opentype::tables::name::Encoding;
+
     match encoding {
         Encoding::Unicode1 | Encoding::Unicode2BMP | Encoding::WindowsUnicodeBMP => {
             Some(to_string(to_utf8(strings::Ucs2::from_bytes(bytes))))

@@ -16,7 +16,3 @@ font = { path = "./font" }
 [[bin]]
 name = "main"
 path = "src/main.rs"
-
-[[bin]]
-name = "about"
-path = "about/src/main.rs"
