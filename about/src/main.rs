@@ -154,30 +154,30 @@ fn main() {
 
 fn field_label(field: Name) -> Option<&'static str> {
     match field {
-        Name::CopyrightNotice => Some("Copyright Notice"), // C
-        Name::FontFamilyName => Some("Family Name"),       // F
-        Name::FontSubfamilyName => Some("Subfamily Name"), // f
-        Name::UniqueFontID => Some("Unique ID"),           // I
-        Name::FullFontName => Some("Full Name"),           // N
-        Name::VersionString => Some("Version"),            // V
-        Name::PostScriptName => Some("PostScript Name"),   // P
-        Name::Trademark => Some("Trademark"),              // R
-        Name::Manufacturer => Some("Manufacturer"),        // M
-        Name::Designer => Some("Designer"),                // A
-        Name::Description => Some("Description"),          // D
-        Name::VendorUrl => Some("Vendor Url"),             // v
-        Name::DesignerUrl => Some("Designer Url"),         // u
-        Name::License => Some("License"),                  // L
-        Name::LicenseInfoUrl => Some("License Info Url"),  // l
-        Name::TypographicFamilyName => Some("Typographic Family Name"), // T
-        Name::TypographicSubfamilyName => Some("Typographic Subfamily Name"), // t
-        Name::CompatibleFullName => Some("Compatible Full Name"), // n
-        Name::SampleText => Some("Sample Text"),           // s
-        Name::PostScriptCIDFindFontName => Some("PostScript CID Find Font Name"), // c
-        Name::WWSFamilyName => Some("WWS Family Name"),    // W
-        Name::WWSSubfamilyName => Some("WWS Subfamily Name"), // w
-        Name::LightBackgroundPalette => Some("Light Background Palette"), // l
-        Name::DarkBackgroundPalette => Some("Dark Background Palette"), // d
-        Name::VariationsPostScriptNamePrefix => Some("Variations PostScript Name Prefix"), // p
+        Name::CopyrightNotice => Some("Copyright Notice"),
+        Name::FontFamilyName => Some("Family Name"),
+        Name::FontSubfamilyName => Some("Subfamily Name"),
+        Name::UniqueFontID => Some("Unique ID"),
+        Name::FullFontName => Some("Full Name"),
+        Name::VersionString => Some("Version"),
+        Name::PostScriptName => Some("PostScript Name"),
+        Name::Trademark => Some("Trademark"),
+        Name::Manufacturer => Some("Manufacturer"),
+        Name::Designer => Some("Designer"),
+        Name::Description => Some("Description"),
+        Name::VendorUrl => Some("Vendor Url"),
+        Name::DesignerUrl => Some("Designer Url"),
+        Name::License => Some("License"),
+        Name::LicenseInfoUrl => Some("License Info Url"),
+        Name::TypographicFamilyName => Some("Typographic Family Name"),
+        Name::TypographicSubfamilyName => Some("Typographic Subfamily Name"),
+        Name::CompatibleFullName => Some("Compatible Full Name"),
+        Name::SampleText => Some("Sample Text"),
+        Name::PostScriptCIDFindFontName => Some("PostScript CID Find Font Name"),
+        Name::WWSFamilyName => Some("WWS Family Name"),
+        Name::WWSSubfamilyName => Some("WWS Subfamily Name"),
+        Name::LightBackgroundPalette => Some("Light Background Palette"),
+        Name::DarkBackgroundPalette => Some("Dark Background Palette"),
+        Name::VariationsPostScriptNamePrefix => Some("Variations PostScript Name Prefix"),
     }
 }
