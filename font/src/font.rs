@@ -66,7 +66,8 @@ impl<'a> Font<'a> {
                             .filter(|(_, o_str)| o_str.is_some())
                             .map(|(n, o_str)| (*n, o_str.unwrap()))
                             .collect()
-                    }).unwrap_or(Vec::new());
+                    })
+                    .unwrap_or(Vec::new());
                 strings.sort_unstable();
                 strings.dedup();
                 strings
@@ -99,8 +100,8 @@ impl<'a> Font<'a> {
     }
 }
 
-fn parse_string(encoding: opentype::tables::name::Encoding, bytes: &[u8]) -> Option<String> {
-    use opentype::tables::name::Encoding;
+fn parse_string(encoding: opentype::encoding::Encoding, bytes: &[u8]) -> Option<String> {
+    use opentype::encoding::Encoding;
 
     match encoding {
         Encoding::Unicode1 | Encoding::Unicode2BMP | Encoding::WindowsUnicodeBMP => {

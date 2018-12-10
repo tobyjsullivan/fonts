@@ -1,4 +1,4 @@
-use opentype::tables::name::Encoding;
+use opentype::encoding::Encoding;
 
 pub fn lookup(encoding_id: u16) -> Option<Encoding> {
     match encoding_id {

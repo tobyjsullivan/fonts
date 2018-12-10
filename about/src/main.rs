@@ -36,7 +36,8 @@ fn main() {
         (@arg DARK_PALETTE: -d --dark "Print Dark Background Palette")
         (@arg PS_VARS: -p --psvar "Print Variations PostScript Name Prefix")
         (@arg INPUT: +required "Sets the input file to use")
-    ).get_matches();
+    )
+    .get_matches();
 
     let filename = matches.value_of("INPUT").unwrap();
     let mut f = File::open(filename).expect("file not found.");

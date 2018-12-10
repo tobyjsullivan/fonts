@@ -1,9 +1,7 @@
-use std::collections::HashSet;
-
-use super::encoding::Encoding;
 use super::name::Name;
-use super::platform::Platform;
 use super::record::{NameRecord, ParseError};
+use opentype::encoding::Encoding;
+use opentype::platform::Platform;
 use opentype::types::{DataType, Offset16, U16};
 
 /// The name table stores strings which represent various metadata in
