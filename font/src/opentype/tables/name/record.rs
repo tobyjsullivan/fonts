@@ -1,7 +1,7 @@
-use super::encoding::Encoding;
 use super::name::Name;
-use super::platform::Platform;
 use byteorder::{BigEndian, ByteOrder};
+use opentype::encoding::Encoding;
+use opentype::platform::Platform;
 
 const U16_LENGTH: usize = 2;
 
@@ -87,7 +87,7 @@ pub enum ParseError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use opentype::tables::name::encoding::Encoding;
+    use opentype::encoding::Encoding;
 
     const SAMPLE_NAME_RECORD: [u8; 12] = [0u8, 1, 0, 0, 0, 0, 0, 0, 0, 47, 0, 0];
 

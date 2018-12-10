@@ -1,3 +1,5 @@
+pub mod encoding;
+pub mod platform;
 pub mod tables;
 mod types;
 
