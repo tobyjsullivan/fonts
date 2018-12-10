@@ -66,7 +66,8 @@ impl<'a> Font<'a> {
                             .filter(|(_, o_str)| o_str.is_some())
                             .map(|(n, o_str)| (*n, o_str.unwrap()))
                             .collect()
-                    }).unwrap_or(Vec::new());
+                    })
+                    .unwrap_or(Vec::new());
                 strings.sort_unstable();
                 strings.dedup();
                 strings
