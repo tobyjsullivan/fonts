@@ -4,7 +4,8 @@ use opentype::types::{DataType, Offset, Offset16, Offset32};
 #[derive(Debug)]
 pub struct LocaTable {
     pub num_glyphs: u16,
-    locations: Vec<Location>,
+    offsets: Vec<usize>,
+    glyf_len: usize,
 }
 
 impl LocaTable {
@@ -14,48 +15,32 @@ impl LocaTable {
         num_glyphs: u16,
         glyf_len: usize,
     ) -> Self {
-        let mut locations = Vec::new();
+        let mut offsets = Vec::new();
         for i in 0..num_glyphs as usize {
-            let location = Self::location(table_data, version, num_glyphs, glyf_len, i);
-            locations.push(location);
+            offsets.push(Self::offset(table_data, version, i));
         }
 
         Self {
             num_glyphs,
-            locations,
+            offsets,
+            glyf_len,
         }
     }
 
-    pub fn index(&self, idx: usize) -> Location {
+    pub fn index(&self, idx: usize) -> Option<Location> {
         if idx as u16 >= self.num_glyphs {
             panic!("Index out of range.");
         }
 
-        *self.locations.get(idx).unwrap()
+        calc_location(&self.offsets, self.glyf_len, idx)
     }
 
-    pub fn locations(&self) -> impl Iterator<Item = &Location> {
-        self.locations.iter()
+    pub fn locations(&self) -> impl Iterator<Item = Location> {
+        LocationIter::new(self.offsets.clone(), self.glyf_len)
     }
 
-    fn location(
-        table_data: &[u8],
-        version: IndexToLocFormat,
-        num_glyphs: u16,
-        glyf_len: usize,
-        idx: usize,
-    ) -> Location {
-        let offset = Self::value_at(table_data, version, idx);
-
-        let next = match idx + 1 == num_glyphs as usize {
-            true => glyf_len,
-            false => Self::value_at(table_data, version, idx + 1),
-        };
-
-        Location {
-            offset,
-            length: next - offset,
-        }
+    fn offset(table_data: &[u8], version: IndexToLocFormat, idx: usize) -> usize {
+        Self::value_at(table_data, version, idx)
     }
 
     fn value_at(table_data: &[u8], version: IndexToLocFormat, idx: usize) -> Offset {
@@ -73,4 +58,44 @@ impl LocaTable {
 pub struct Location {
     pub(crate) offset: usize,
     pub(crate) length: usize,
+}
+
+struct LocationIter {
+    cursor: usize,
+    offsets: Vec<usize>,
+    glyf_len: usize,
+}
+
+impl LocationIter {
+    fn new(offsets: Vec<usize>, glyf_len: usize) -> Self {
+        Self {
+            cursor: 0,
+            offsets,
+            glyf_len,
+        }
+    }
+}
+
+impl Iterator for LocationIter {
+    type Item = Location;
+
+    fn next(&mut self) -> Option<Location> {
+        let idx = self.cursor;
+        self.cursor += 1;
+        calc_location(&self.offsets, self.glyf_len, idx)
+    }
+}
+
+fn calc_location(offsets: &Vec<usize>, glyf_len: usize, idx: usize) -> Option<Location> {
+    match (offsets.get(idx), offsets.get(idx + 1)) {
+        (Some(offset), Some(next)) => Some(Location {
+            offset: *offset,
+            length: next - offset,
+        }),
+        (Some(offset), None) => Some(Location {
+            offset: *offset,
+            length: glyf_len - offset,
+        }),
+        (None, _) => None,
+    }
 }
