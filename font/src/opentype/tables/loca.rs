@@ -2,18 +2,27 @@ use super::head::IndexToLocFormat;
 use opentype::types::{DataType, Offset, Offset16, Offset32};
 
 #[derive(Debug)]
-pub struct LocaTable<'a> {
-    table_data: &'a [u8],
-    version: IndexToLocFormat,
+pub struct LocaTable {
     pub num_glyphs: u16,
+    locations: Vec<Location>,
 }
 
-impl<'a> LocaTable<'a> {
-    pub fn parse(table_data: &'a [u8], version: IndexToLocFormat, num_glyphs: u16) -> Self {
+impl<'a> LocaTable {
+    pub fn parse(
+        table_data: &'a [u8],
+        version: IndexToLocFormat,
+        num_glyphs: u16,
+        glyf_len: usize,
+    ) -> Self {
+        let mut locations = Vec::new();
+        for i in 0..num_glyphs as usize {
+            let location = Self::location(table_data, version, num_glyphs, glyf_len, i);
+            locations.push(location);
+        }
+
         Self {
-            table_data,
-            version,
             num_glyphs,
+            locations,
         }
     }
 
@@ -22,8 +31,22 @@ impl<'a> LocaTable<'a> {
             panic!("Index out of range.");
         }
 
-        let offset = self.value_at(idx);
-        let next = self.value_at(idx + 1);
+        *self.locations.get(idx).unwrap()
+    }
+
+    fn location(
+        table_data: &[u8],
+        version: IndexToLocFormat,
+        num_glyphs: u16,
+        glyf_len: usize,
+        idx: usize,
+    ) -> Location {
+        let offset = Self::value_at(table_data, version, idx);
+
+        let next = match idx + 1 == num_glyphs as usize {
+            true => glyf_len,
+            false => Self::value_at(table_data, version, idx + 1),
+        };
 
         Location {
             offset,
@@ -31,18 +54,12 @@ impl<'a> LocaTable<'a> {
         }
     }
 
-    fn value_at(&self, idx: usize) -> Offset {
-        if idx as u16 > self.num_glyphs {
-            panic!("Index out of range.");
-        }
-
-        match self.version {
-            IndexToLocFormat::ShortOffset => {
-                Offset16::extract(self.table_data, idx * 2usize) * 2usize
-            }
-            IndexToLocFormat::LongOffset => Offset32::extract(self.table_data, idx * 4usize),
+    fn value_at(table_data: &[u8], version: IndexToLocFormat, idx: usize) -> Offset {
+        match version {
+            IndexToLocFormat::ShortOffset => Offset16::extract(table_data, idx * 2usize) * 2usize,
+            IndexToLocFormat::LongOffset => Offset32::extract(table_data, idx * 4usize),
             _ => {
-                panic!("Unknown loca format {:?}", self.version);
+                panic!("Unknown loca format {:?}", version);
             }
         }
     }
@@ -52,45 +69,4 @@ impl<'a> LocaTable<'a> {
 pub struct Location {
     pub(crate) offset: usize,
     pub(crate) length: usize,
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn index_short() {
-        const EXAMPLE_TABLE_DATA: [u8; 8] = [0u8, 0, 0, 64, 0, 164, 0, 248];
-        let table = LocaTable {
-            table_data: &EXAMPLE_TABLE_DATA,
-            version: IndexToLocFormat::ShortOffset,
-            num_glyphs: 4,
-        };
-
-        assert_eq!(
-            table.index(1),
-            Location {
-                offset: 128usize,
-                length: 200
-            }
-        );
-    }
-
-    #[test]
-    fn index_long() {
-        const EXAMPLE_TABLE_DATA: [u8; 12] = [0u8, 0, 0, 0, 0, 0, 0, 248, 0, 0, 1, 37];
-        let table = LocaTable {
-            table_data: &EXAMPLE_TABLE_DATA,
-            version: IndexToLocFormat::LongOffset,
-            num_glyphs: 4,
-        };
-
-        assert_eq!(
-            table.index(1),
-            Location {
-                offset: 248usize,
-                length: 45
-            }
-        );
-    }
 }

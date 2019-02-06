@@ -19,7 +19,7 @@ pub struct OpenTypeFile<'a> {
     cmap: Option<CmapTable>,
     glyf: Option<GlyfTable<'a>>,
     head: Option<HeadTable>,
-    loca: Option<LocaTable<'a>>,
+    loca: Option<LocaTable>,
     maxp: Option<MaxpTable>,
     pub name: Option<NameTable<'a>>,
 }
@@ -73,20 +73,24 @@ impl<'a> OpenTypeFile<'a> {
         }
         let mut loca = None;
         if let Some(table_data) = loca_data {
-            let (ret_maxp, ret_head) = match (maxp, head) {
-                (Some(maxp_table), Some(head_table)) => {
+            let (ret_maxp, ret_head, ret_glyf_data) = match (maxp, head, glyf_data) {
+                (Some(maxp_table), Some(head_table), Some(glyf_data)) => {
                     loca = Some(LocaTable::parse(
                         table_data,
                         head_table.index_to_loc_fmt,
                         maxp_table.num_glyphs,
+                        glyf_data.len(),
                     ));
-                    (Some(maxp_table), Some(head_table))
+                    (Some(maxp_table), Some(head_table), Some(glyf_data))
                 }
-                (None, _) => {
+                (None, _, _) => {
                     panic!("Cannot deserialize loca table because no maxp table found.");
                 }
-                (_, None) => {
+                (_, None, _) => {
                     panic!("Cannot deserialize loca table because no head table found.");
+                }
+                (_, _, None) => {
+                    panic!("Cannot deserialize loca table because no glyf data found.");
                 }
             };
             maxp = ret_maxp;
