@@ -7,9 +7,9 @@ pub struct LocaTable {
     locations: Vec<Location>,
 }
 
-impl<'a> LocaTable {
+impl LocaTable {
     pub fn parse(
-        table_data: &'a [u8],
+        table_data: &[u8],
         version: IndexToLocFormat,
         num_glyphs: u16,
         glyf_len: usize,
@@ -32,6 +32,10 @@ impl<'a> LocaTable {
         }
 
         *self.locations.get(idx).unwrap()
+    }
+
+    pub fn locations(&self) -> impl Iterator<Item = &Location> {
+        self.locations.iter()
     }
 
     fn location(
@@ -65,7 +69,7 @@ impl<'a> LocaTable {
     }
 }
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub struct Location {
     pub(crate) offset: usize,
     pub(crate) length: usize,

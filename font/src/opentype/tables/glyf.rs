@@ -1,39 +1,46 @@
-use opentype::tables::loca::Location;
+use opentype::tables::loca::{LocaTable};
 use opentype::types::{DataType, I16, U16, U8};
 
 #[derive(Debug)]
-pub struct GlyfTable<'a> {
-    table_data: &'a [u8],
+pub struct GlyfTable {
+    glyphs: Vec<Option<Glyph>>,
 }
 
-impl<'a> GlyfTable<'a> {
-    pub fn parse(table_data: &'a [u8]) -> Self {
-        Self { table_data }
-    }
+impl GlyfTable {
+    pub fn parse(table_data: &[u8], loca_table: &LocaTable) -> Self {
+        let mut glyphs = Vec::new();
+        for location in loca_table.locations() {
+            let len = location.length;
+            if len == 0 {
+                glyphs.push(None);
+                continue;
+            }
 
-    pub fn read_glyph(&self, loca: Location) -> Option<Glyph> {
-        if loca.length == 0 {
-            return None;
+            let offset = location.offset;
+            let glyph = Glyph::deserialize(&table_data[offset..offset+len]);
+            glyphs.push(Some(glyph));
         }
 
-        Some(Glyph::deserialize(
-            &self.table_data[loca.offset..loca.offset + loca.length],
-        ))
+        Self { glyphs }
+    }
+
+    pub fn read_glyph(&self, loca_idx: usize) -> Option<Glyph> {
+        self.glyphs.get(loca_idx).map(|o| o.clone()).unwrap_or(None)
     }
 }
 
-#[derive(Debug)]
-pub struct Glyph<'a> {
+#[derive(Clone, Debug)]
+pub struct Glyph {
     num_contours: i16,
     min_x: i16,
     min_y: i16,
     max_x: i16,
     max_y: i16,
-    simple_glyph: Option<SimpleGlyphTable<'a>>,
+    simple_glyph: Option<SimpleGlyphTable>,
     compound_glyph: Option<CompoundGlyphTable>,
 }
 
-impl<'a> Glyph<'a> {
+impl Glyph {
     const OFFSET_NUM_CONTOURS: usize = 0;
     const OFFSET_MIN_X: usize = 2;
     const OFFSET_MIN_Y: usize = 4;
@@ -41,7 +48,7 @@ impl<'a> Glyph<'a> {
     const OFFSET_MAX_Y: usize = 8;
     const OFFSET_TABLE_DATA: usize = 10;
 
-    fn deserialize(glyph_data: &'a [u8]) -> Self {
+    fn deserialize(glyph_data: &[u8]) -> Self {
         let num_contours = I16::extract(glyph_data, Self::OFFSET_NUM_CONTOURS);
 
         let mut simple_glyph = None;
@@ -69,17 +76,17 @@ impl<'a> Glyph<'a> {
     }
 }
 
-#[derive(Debug)]
-struct SimpleGlyphTable<'a> {
+#[derive(Clone, Debug)]
+struct SimpleGlyphTable {
     end_points_of_contours: Vec<usize>,
     instruction_length: usize,
-    instructions: &'a [u8],
+    instructions: Vec<u8>,
     flags: Vec<u8>,
     x_coordinates: Vec<i16>,
     y_coordinates: Vec<i16>,
 }
 
-impl<'a> SimpleGlyphTable<'a> {
+impl<'a> SimpleGlyphTable {
     const MASK_X_SHORT_VECTOR: u8 = 0b0000_0010;
     const MASK_Y_SHORT_VECTOR: u8 = 0b0000_0100;
     const MASK_REPEAT_FLAG: u8 = 0b0000_1000;
@@ -112,8 +119,7 @@ impl<'a> SimpleGlyphTable<'a> {
         Self {
             end_points_of_contours,
             instruction_length,
-            instructions: &table_data
-                [offset_instructions..offset_instructions + instruction_length],
+            instructions: table_data[offset_instructions..offset_instructions + instruction_length].to_vec(),
             flags,
             x_coordinates,
             y_coordinates,
@@ -230,5 +236,5 @@ impl<'a> SimpleGlyphTable<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct CompoundGlyphTable {}
