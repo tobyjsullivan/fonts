@@ -114,8 +114,8 @@ impl<'a> fmt::Debug for Table<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "TableRecord {{ tag: {:?}, size: {} bytes }}",
-            self.tag, self.length
+            "TableRecord {{ tag: {:?}, size: {} bytes, data: {:?} }}",
+            self.tag, self.length, self.table_data
         )
     }
 }
