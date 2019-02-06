@@ -1,4 +1,4 @@
-use opentype::tables::loca::{LocaTable};
+use opentype::tables::loca::LocaTable;
 use opentype::types::{DataType, I16, U16, U8};
 
 #[derive(Debug)]
@@ -17,7 +17,7 @@ impl GlyfTable {
             }
 
             let offset = location.offset;
-            let glyph = Glyph::deserialize(&table_data[offset..offset+len]);
+            let glyph = Glyph::deserialize(&table_data[offset..offset + len]);
             glyphs.push(Some(glyph));
         }
 
@@ -119,7 +119,8 @@ impl<'a> SimpleGlyphTable {
         Self {
             end_points_of_contours,
             instruction_length,
-            instructions: table_data[offset_instructions..offset_instructions + instruction_length].to_vec(),
+            instructions: table_data[offset_instructions..offset_instructions + instruction_length]
+                .to_vec(),
             flags,
             x_coordinates,
             y_coordinates,
