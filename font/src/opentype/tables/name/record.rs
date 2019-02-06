@@ -12,8 +12,7 @@ pub struct NameRecord {
     language_id: u16,
     name_id: u16,
     pub name: Option<Name>,
-    pub string_length: usize,
-    pub string_offset: usize,
+    pub data: Vec<u8>,
 }
 
 impl NameRecord {
@@ -24,15 +23,17 @@ impl NameRecord {
     const STRING_LENGTH_OFFSET: usize = 8;
     const STRING_OFFSET_OFFSET: usize = 10;
 
-    pub fn deserialize(record_data: &[u8]) -> Result<Self, ParseError> {
+    pub fn deserialize(record_data: &[u8], string_data: &[u8]) -> Result<Self, ParseError> {
+        let len = Self::parse_string_length(record_data);
+        let offset = Self::parse_string_offset(record_data);
+
         Ok(Self {
             platform: Self::parse_platform(record_data)?,
             encoding: Self::parse_encoding(record_data)?,
             language_id: Self::parse_language_id(record_data),
             name_id: Self::parse_name_id(record_data),
             name: Name::lookup(Self::parse_name_id(record_data)),
-            string_length: Self::parse_string_length(record_data),
-            string_offset: Self::parse_string_offset(record_data),
+            data: string_data[offset..offset + len].to_vec(),
         })
     }
 
@@ -89,11 +90,12 @@ mod tests {
     use super::*;
     use opentype::encoding::Encoding;
 
-    const SAMPLE_NAME_RECORD: [u8; 12] = [0u8, 1, 0, 0, 0, 0, 0, 0, 0, 47, 0, 0];
+    const SAMPLE_NAME_RECORD: [u8; 12] = [0u8, 1, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0];
+    const SAMPLE_STRING_DATA: [u8; 4] = [0u8, 24, 0, 27];
 
     #[test]
     fn deserialize_name_record() {
-        let result = NameRecord::deserialize(&SAMPLE_NAME_RECORD);
+        let result = NameRecord::deserialize(&SAMPLE_NAME_RECORD, &SAMPLE_STRING_DATA);
         let record = result.unwrap();
 
         assert_eq!(record.platform, Platform::Macintosh);
@@ -101,7 +103,6 @@ mod tests {
         assert_eq!(record.language_id, 0u16);
         assert_eq!(record.name_id, 0);
         assert_eq!(record.name, Some(Name::CopyrightNotice));
-        assert_eq!(record.string_length, 47);
-        assert_eq!(record.string_offset, 0);
+        assert_eq!(record.data, vec![0u8, 24, 0, 27]);
     }
 }

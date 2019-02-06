@@ -17,11 +17,11 @@ pub use self::tables::glyf::Glyph;
 pub struct OpenTypeFile<'a> {
     sfnt: SfntFile<'a>,
     cmap: Option<CmapTable>,
-    glyf: Option<GlyfTable<'a>>,
+    glyf: Option<GlyfTable>,
     head: Option<HeadTable>,
-    loca: Option<LocaTable<'a>>,
+    loca: Option<LocaTable>,
     maxp: Option<MaxpTable>,
-    pub name: Option<NameTable<'a>>,
+    pub name: Option<NameTable>,
 }
 
 impl<'a> OpenTypeFile<'a> {
@@ -59,10 +59,6 @@ impl<'a> OpenTypeFile<'a> {
                 }
             }
         }
-        let mut glyf = None;
-        if let Some(table_data) = glyf_data {
-            glyf = Some(GlyfTable::parse(table_data));
-        }
         let mut head = None;
         if let Some(table_data) = head_data {
             head = Some(HeadTable::parse(table_data));
@@ -73,24 +69,32 @@ impl<'a> OpenTypeFile<'a> {
         }
         let mut loca = None;
         if let Some(table_data) = loca_data {
-            let (ret_maxp, ret_head) = match (maxp, head) {
-                (Some(maxp_table), Some(head_table)) => {
+            let (ret_maxp, ret_head) = match (maxp, head, glyf_data) {
+                (Some(maxp_table), Some(head_table), Some(glyf_data)) => {
                     loca = Some(LocaTable::parse(
                         table_data,
                         head_table.index_to_loc_fmt,
                         maxp_table.num_glyphs,
+                        glyf_data.len(),
                     ));
                     (Some(maxp_table), Some(head_table))
                 }
-                (None, _) => {
+                (None, _, _) => {
                     panic!("Cannot deserialize loca table because no maxp table found.");
                 }
-                (_, None) => {
+                (_, None, _) => {
                     panic!("Cannot deserialize loca table because no head table found.");
+                }
+                (_, _, None) => {
+                    panic!("Cannot deserialize loca table because no glyf data found.");
                 }
             };
             maxp = ret_maxp;
             head = ret_head;
+        }
+        let mut glyf = None;
+        if let (Some(table_data), Some(loca)) = (glyf_data, loca.as_ref()) {
+            glyf = Some(GlyfTable::parse(table_data, loca));
         }
         let mut name = None;
         if let Some(table_data) = name_data {
@@ -120,11 +124,9 @@ impl<'a> OpenTypeFile<'a> {
     }
 
     pub fn lookup_glyph(&self, idx: usize) -> Option<Glyph> {
-        let loca = self.loca.as_ref();
         let glyf = self.glyf.as_ref();
-        let location = loca.map(|loca| loca.index(idx));
 
-        location.and_then(|loc| glyf.and_then(|table| table.read_glyph(loc)))
+        glyf.and_then(|table| table.read_glyph(idx))
     }
 }
 

@@ -2,95 +2,100 @@ use super::head::IndexToLocFormat;
 use opentype::types::{DataType, Offset, Offset16, Offset32};
 
 #[derive(Debug)]
-pub struct LocaTable<'a> {
-    table_data: &'a [u8],
-    version: IndexToLocFormat,
+pub struct LocaTable {
     pub num_glyphs: u16,
+    offsets: Vec<usize>,
+    glyf_len: usize,
 }
 
-impl<'a> LocaTable<'a> {
-    pub fn parse(table_data: &'a [u8], version: IndexToLocFormat, num_glyphs: u16) -> Self {
+impl LocaTable {
+    pub fn parse(
+        table_data: &[u8],
+        version: IndexToLocFormat,
+        num_glyphs: u16,
+        glyf_len: usize,
+    ) -> Self {
+        let mut offsets = Vec::new();
+        for i in 0..num_glyphs as usize {
+            offsets.push(Self::offset(table_data, version, i));
+        }
+
         Self {
-            table_data,
-            version,
             num_glyphs,
+            offsets,
+            glyf_len,
         }
     }
 
-    pub fn index(&self, idx: usize) -> Location {
+    pub fn index(&self, idx: usize) -> Option<Location> {
         if idx as u16 >= self.num_glyphs {
             panic!("Index out of range.");
         }
 
-        let offset = self.value_at(idx);
-        let next = self.value_at(idx + 1);
-
-        Location {
-            offset,
-            length: next - offset,
-        }
+        calc_location(&self.offsets, self.glyf_len, idx)
     }
 
-    fn value_at(&self, idx: usize) -> Offset {
-        if idx as u16 > self.num_glyphs {
-            panic!("Index out of range.");
-        }
+    pub fn locations(&self) -> impl Iterator<Item = Location> {
+        LocationIter::new(self.offsets.clone(), self.glyf_len)
+    }
 
-        match self.version {
-            IndexToLocFormat::ShortOffset => {
-                Offset16::extract(self.table_data, idx * 2usize) * 2usize
-            }
-            IndexToLocFormat::LongOffset => Offset32::extract(self.table_data, idx * 4usize),
+    fn offset(table_data: &[u8], version: IndexToLocFormat, idx: usize) -> usize {
+        Self::value_at(table_data, version, idx)
+    }
+
+    fn value_at(table_data: &[u8], version: IndexToLocFormat, idx: usize) -> Offset {
+        match version {
+            IndexToLocFormat::ShortOffset => Offset16::extract(table_data, idx * 2usize) * 2usize,
+            IndexToLocFormat::LongOffset => Offset32::extract(table_data, idx * 4usize),
             _ => {
-                panic!("Unknown loca format {:?}", self.version);
+                panic!("Unknown loca format {:?}", version);
             }
         }
     }
 }
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub struct Location {
     pub(crate) offset: usize,
     pub(crate) length: usize,
 }
 
-#[cfg(test)]
-mod test {
-    use super::*;
+struct LocationIter {
+    cursor: usize,
+    offsets: Vec<usize>,
+    glyf_len: usize,
+}
 
-    #[test]
-    fn index_short() {
-        const EXAMPLE_TABLE_DATA: [u8; 8] = [0u8, 0, 0, 64, 0, 164, 0, 248];
-        let table = LocaTable {
-            table_data: &EXAMPLE_TABLE_DATA,
-            version: IndexToLocFormat::ShortOffset,
-            num_glyphs: 4,
-        };
-
-        assert_eq!(
-            table.index(1),
-            Location {
-                offset: 128usize,
-                length: 200
-            }
-        );
+impl LocationIter {
+    fn new(offsets: Vec<usize>, glyf_len: usize) -> Self {
+        Self {
+            cursor: 0,
+            offsets,
+            glyf_len,
+        }
     }
+}
 
-    #[test]
-    fn index_long() {
-        const EXAMPLE_TABLE_DATA: [u8; 12] = [0u8, 0, 0, 0, 0, 0, 0, 248, 0, 0, 1, 37];
-        let table = LocaTable {
-            table_data: &EXAMPLE_TABLE_DATA,
-            version: IndexToLocFormat::LongOffset,
-            num_glyphs: 4,
-        };
+impl Iterator for LocationIter {
+    type Item = Location;
 
-        assert_eq!(
-            table.index(1),
-            Location {
-                offset: 248usize,
-                length: 45
-            }
-        );
+    fn next(&mut self) -> Option<Location> {
+        let idx = self.cursor;
+        self.cursor += 1;
+        calc_location(&self.offsets, self.glyf_len, idx)
+    }
+}
+
+fn calc_location(offsets: &Vec<usize>, glyf_len: usize, idx: usize) -> Option<Location> {
+    match (offsets.get(idx), offsets.get(idx + 1)) {
+        (Some(offset), Some(next)) => Some(Location {
+            offset: *offset,
+            length: next - offset,
+        }),
+        (Some(offset), None) => Some(Location {
+            offset: *offset,
+            length: glyf_len - offset,
+        }),
+        (None, _) => None,
     }
 }
