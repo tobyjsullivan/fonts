@@ -21,7 +21,7 @@ pub struct OpenTypeFile<'a> {
     head: Option<HeadTable>,
     loca: Option<LocaTable>,
     maxp: Option<MaxpTable>,
-    pub name: Option<NameTable<'a>>,
+    pub name: Option<NameTable>,
 }
 
 impl<'a> OpenTypeFile<'a> {
